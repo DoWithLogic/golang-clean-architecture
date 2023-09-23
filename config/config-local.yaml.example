@@ -1,0 +1,16 @@
+server:
+  name: golang-clean-architecture
+  version: "v0.0.1"
+  rpc_port: 8080
+  rest_port: 9090
+  debug: false
+  env: local
+  read_time_out: 5s
+  write_time_out: 5s
+
+database:
+  host: localhost
+  port: 3306
+  name: golang-clean-architecture
+  user: mysql
+  password: pwd

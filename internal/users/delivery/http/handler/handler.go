@@ -1,0 +1,75 @@
+package handler
+
+import (
+	"context"
+	"net/http"
+	"time"
+
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
+	usecases "github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
+	"github.com/labstack/echo/v4"
+)
+
+type (
+	Handlers interface {
+		CreateUser(c echo.Context) error
+		UpdateUser(c echo.Context) error
+	}
+
+	handlers struct {
+		uc  usecases.Usecase
+		log *zerolog.Logger
+	}
+)
+
+func NewHandlers(uc usecases.Usecase, log *zerolog.Logger) Handlers {
+	return &handlers{uc, log}
+}
+
+func (h *handlers) CreateUser(c echo.Context) error {
+	var (
+		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
+		payload     dtos.CreateUserPayload
+	)
+	defer cancel()
+
+	if err := c.Bind(&payload); err != nil {
+		h.log.Z().Err(err).Msg("[handlers]CreateUser.Bind")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	if err := payload.Validate(); err != nil {
+		h.log.Z().Err(err).Msg("[handlers]CreateUser.Validate")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	createdID, err := h.uc.CreateUser(ctx, &entities.Users{Fullname: payload.Fullname, PhoneNumber: payload.PhoneNumber})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dtos.NewResponseError(
+			http.StatusInternalServerError,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusInternalServerError),
+			err.Error()),
+		)
+	}
+
+	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, map[string]any{"user_id": createdID}))
+}
+
+func (h *handlers) UpdateUser(c echo.Context) error {
+	return nil
+}
