@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
@@ -14,6 +16,7 @@ type (
 	Usecase interface {
 		CreateUser(context.Context, *entities.Users) (int64, error)
 		UpdateUser(context.Context, *entities.UpdateUsers) error
+		UpdateUserStatus(context.Context, *entities.UpdateUsers) error
 	}
 
 	usecase struct {
@@ -65,4 +68,27 @@ func (uc *usecase) UpdateUser(ctx context.Context, updateData *entities.UpdateUs
 
 		return nil
 	}(uc.dbTx)
+}
+
+func (uc *usecase) UpdateUserStatus(ctx context.Context, req *entities.UpdateUsers) error {
+	userDetail, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{})
+	if err != nil {
+		uc.log.Z().Err(err).Msg("[usecase]UpdateUserStatus.GetUserByID")
+		return err
+	}
+
+	fmt.Println("user_id", userDetail.UserID)
+
+	updateStatusArgs := &entities.Users{
+		UserID:    userDetail.UserID,
+		IsActive:  req.IsActive,
+		UpdatedAt: time.Now().Format("2006-01-02 15:04:05"),
+		UpdatedBy: "martin",
+	}
+
+	if err := uc.repo.UpdateUserStatusByID(ctx, updateStatusArgs); err != nil {
+		uc.log.Z().Err(err).Msg("[usecase]UpdateUserStatus.UpdateUserStatusByID")
+	}
+
+	return nil
 }
