@@ -7,6 +7,7 @@ type UpdateUsers struct {
 	Fullname    string
 	PhoneNumber string
 	UserType    string
+	IsActive    bool
 	UpdatedAt   string
 	UpdatedBy   string
 }

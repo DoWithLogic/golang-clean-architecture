@@ -7,6 +7,8 @@ var (
 	InsertUsers string
 	//go:embed users/update.sql
 	UpdateUsers string
+	//go:embed users/update_status_by_id.sql
+	UpdateUserStatusByID string
 	//go:embed users/select.sql
 	GetUserByID string
 )

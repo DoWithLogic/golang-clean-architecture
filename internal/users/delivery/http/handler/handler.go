@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,12 +18,22 @@ type (
 	Handlers interface {
 		CreateUser(c echo.Context) error
 		UpdateUser(c echo.Context) error
+		UpdateUserStatus(c echo.Context) error
 	}
 
 	handlers struct {
 		uc  usecases.Usecase
 		log *zerolog.Logger
 	}
+)
+
+const (
+	BooleanTextTrue  = "true"
+	BooleanTextFalse = "false"
+)
+
+var (
+	ErrInvalidIsActive = errors.New("invalid is_active")
 )
 
 func NewHandlers(uc usecases.Usecase, log *zerolog.Logger) Handlers {
@@ -122,6 +133,52 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 	}
 
 	err = h.uc.UpdateUser(ctx, updateArgs)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusInternalServerError,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusInternalServerError),
+			err.Error()),
+		)
+	}
+
+	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, nil))
+}
+
+func (h *handlers) UpdateUserStatus(c echo.Context) error {
+	var (
+		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
+		payload     dtos.UpdateUserStatusPayload
+	)
+	defer cancel()
+
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		h.log.Z().Err(err).Msg("[handlers]UpdateUser.ParseParam")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	switch c.QueryParam("is_active") {
+	case BooleanTextFalse:
+		payload.IsActive = false
+	case BooleanTextTrue:
+		payload.IsActive = true
+	default:
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			ErrInvalidIsActive.Error()),
+		)
+	}
+
+	err = h.uc.UpdateUserStatus(ctx, &entities.UpdateUsers{UserID: userID, IsActive: payload.IsActive})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusInternalServerError,

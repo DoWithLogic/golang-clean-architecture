@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
@@ -15,12 +16,17 @@ type (
 		SaveNewUser(context.Context, *entities.Users) (int64, error)
 		UpdateUserByID(context.Context, *entities.UpdateUsers) error
 		GetUserByID(context.Context, int64, entities.LockingOpt) (entities.Users, error)
+		UpdateUserStatusByID(context.Context, *entities.Users) error
 	}
 
 	repository struct {
 		conn database.SQLTxConn
 		log  *zerolog.Logger
 	}
+)
+
+var (
+	ErrUserNotFound = errors.New("user not found")
 )
 
 func NewRepository(conn database.SQLTxConn, log *zerolog.Logger) Repository {
@@ -86,7 +92,6 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 			&userData.IsActive,
 			&userData.CreatedAt,
 		}
-
 	}
 
 	query := repository_query.GetUserByID
@@ -102,5 +107,27 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 		return userData, err
 	}
 
+	if userData.UserID != userID {
+		return userData, ErrUserNotFound
+	}
+
 	return userData, err
+}
+
+func (repo *repository) UpdateUserStatusByID(ctx context.Context, req *entities.Users) error {
+	args := custom.Array{
+		req.IsActive,
+		req.UpdatedAt,
+		req.UpdatedBy,
+		req.UserID,
+	}
+
+	err := new(database.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, nil)
+	if err != nil {
+		repo.log.Z().Err(err).Msg("[repository]UpdateUserStatusByID.ExecContext")
+
+		return err
+	}
+
+	return nil
 }
