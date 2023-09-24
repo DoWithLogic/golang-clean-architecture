@@ -87,6 +87,14 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
   - [ ] Database migration and seed tool
   - [ ] Releaser
 
+## How To Run
+
+setup environment and running on local
+```bash
+make run    # Start the database, run migrations, and start the application locally
+```
+
+
 ## References
 
 Golang:
