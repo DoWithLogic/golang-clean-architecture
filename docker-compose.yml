@@ -8,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-pwd}
       MYSQL_USER: ${MYSQL_USER:-mysql}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pwd}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-golang-clean-architecture}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-users}
     restart: unless-stopped
     ports:
       - 3306:3306
