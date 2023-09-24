@@ -6,4 +6,4 @@ SELECT
     u.is_active,
     u.created_at
 FROM users u
-WHERE u.id = $1
+WHERE u.id = ?

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
@@ -71,5 +72,64 @@ func (h *handlers) CreateUser(c echo.Context) error {
 }
 
 func (h *handlers) UpdateUser(c echo.Context) error {
-	return nil
+	var (
+		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
+		payload     dtos.UpdateUserPayload
+	)
+	defer cancel()
+
+	h.log.Z().Info().Msg("[handlers]UpdateUser")
+
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		h.log.Z().Err(err).Msg("[handlers]UpdateUser.ParseParam")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	if err := c.Bind(&payload); err != nil {
+		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Bind")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	if err := payload.Validate(); err != nil {
+		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Validate")
+
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusBadRequest,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusBadRequest),
+			err.Error()),
+		)
+	}
+
+	updateArgs := &entities.UpdateUsers{
+		UserID:      userID,
+		Fullname:    payload.Fullname,
+		PhoneNumber: payload.Fullname,
+		UserType:    payload.UserType,
+	}
+
+	err = h.uc.UpdateUser(ctx, updateArgs)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+			http.StatusInternalServerError,
+			dtos.MsgFailed,
+			dtos.Text(http.StatusInternalServerError),
+			err.Error()),
+		)
+	}
+
+	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, nil))
 }

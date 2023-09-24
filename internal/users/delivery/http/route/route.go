@@ -8,4 +8,5 @@ import (
 func RouteUsers(version *echo.Group, ctrl handler.Handlers) {
 	users := version.Group("users")
 	users.POST("", ctrl.CreateUser)
+	users.PATCH("/:id", ctrl.UpdateUser)
 }
