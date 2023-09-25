@@ -2,7 +2,6 @@ package entities
 
 import (
 	"errors"
-	"time"
 )
 
 type (
@@ -39,15 +38,4 @@ func (locking *LockingOpt) Validate() error {
 	}
 
 	return nil
-}
-
-func NewUser(data Users) *Users {
-	return &Users{
-		Fullname:    data.Fullname,
-		PhoneNumber: data.PhoneNumber,
-		UserType:    UserTypeRegular,
-		IsActive:    true,
-		CreatedAt:   time.Now().Format("2006-01-02 15:04:05"),
-		CreatedBy:   "martin",
-	}
 }

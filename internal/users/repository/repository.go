@@ -13,10 +13,10 @@ import (
 
 type (
 	Repository interface {
-		SaveNewUser(context.Context, *entities.Users) (int64, error)
-		UpdateUserByID(context.Context, *entities.UpdateUsers) error
+		SaveNewUser(context.Context, entities.CreateUser) (int64, error)
+		UpdateUserByID(context.Context, entities.UpdateUsers) error
 		GetUserByID(context.Context, int64, entities.LockingOpt) (entities.Users, error)
-		UpdateUserStatusByID(context.Context, *entities.Users) error
+		UpdateUserStatusByID(context.Context, entities.UpdateUserStatus) error
 	}
 
 	repository struct {
@@ -33,9 +33,9 @@ func NewRepository(conn database.SQLTxConn, log *zerolog.Logger) Repository {
 	return &repository{conn, log}
 }
 
-func (repo *repository) SaveNewUser(ctx context.Context, user *entities.Users) (int64, error) {
+func (repo *repository) SaveNewUser(ctx context.Context, user entities.CreateUser) (int64, error) {
 	args := custom.Array{
-		user.Fullname,
+		user.FUllName,
 		user.PhoneNumber,
 		user.IsActive,
 		user.UserType,
@@ -54,7 +54,7 @@ func (repo *repository) SaveNewUser(ctx context.Context, user *entities.Users) (
 	return userID, err
 }
 
-func (repo *repository) UpdateUserByID(ctx context.Context, user *entities.UpdateUsers) error {
+func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUsers) error {
 	args := custom.Array{
 		user.Fullname, user.Fullname,
 		user.PhoneNumber, user.PhoneNumber,
@@ -114,7 +114,7 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 	return userData, err
 }
 
-func (repo *repository) UpdateUserStatusByID(ctx context.Context, req *entities.Users) error {
+func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.UpdateUserStatus) error {
 	args := custom.Array{
 		req.IsActive,
 		req.UpdatedAt,
@@ -122,11 +122,16 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req *entities.
 		req.UserID,
 	}
 
-	err := new(database.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, nil)
+	var updatedID int64
+	err := new(database.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, &updatedID)
 	if err != nil {
 		repo.log.Z().Err(err).Msg("[repository]UpdateUserStatusByID.ExecContext")
 
 		return err
+	}
+
+	if updatedID != req.UserID {
+		return errors.New("user not found")
 	}
 
 	return nil

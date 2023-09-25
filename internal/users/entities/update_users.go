@@ -7,18 +7,17 @@ type UpdateUsers struct {
 	Fullname    string
 	PhoneNumber string
 	UserType    string
-	IsActive    bool
-	UpdatedAt   string
+	UpdatedAt   time.Time
 	UpdatedBy   string
 }
 
-func NewUpdateUsers(data UpdateUsers) *UpdateUsers {
-	return &UpdateUsers{
+func NewUpdateUsers(data UpdateUsers) UpdateUsers {
+	return UpdateUsers{
 		UserID:      data.UserID,
 		Fullname:    data.Fullname,
 		PhoneNumber: data.PhoneNumber,
 		UserType:    UserTypeRegular,
-		UpdatedAt:   time.Now().Format("2006-01-02 15:04:05"),
+		UpdatedAt:   time.Now(),
 		UpdatedBy:   "martin",
 	}
 }

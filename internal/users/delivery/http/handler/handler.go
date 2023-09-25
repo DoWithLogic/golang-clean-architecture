@@ -69,7 +69,12 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		)
 	}
 
-	createdID, err := h.uc.CreateUser(ctx, &entities.Users{Fullname: payload.Fullname, PhoneNumber: payload.PhoneNumber})
+	argsCreateUser := entities.CreateUser{
+		FUllName:    payload.FullName,
+		PhoneNumber: payload.PhoneNumber,
+	}
+
+	createdID, err := h.uc.CreateUser(ctx, argsCreateUser)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dtos.NewResponseError(
 			http.StatusInternalServerError,
@@ -125,14 +130,14 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		)
 	}
 
-	updateArgs := &entities.UpdateUsers{
+	argsUpdateUser := entities.UpdateUsers{
 		UserID:      userID,
 		Fullname:    payload.Fullname,
 		PhoneNumber: payload.Fullname,
 		UserType:    payload.UserType,
 	}
 
-	err = h.uc.UpdateUser(ctx, updateArgs)
+	err = h.uc.UpdateUser(ctx, argsUpdateUser)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusInternalServerError,
@@ -178,7 +183,12 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		)
 	}
 
-	err = h.uc.UpdateUserStatus(ctx, &entities.UpdateUsers{UserID: userID, IsActive: payload.IsActive})
+	argsUpdateUserStatus := entities.UpdateUserStatus{
+		UserID:   userID,
+		IsActive: payload.IsActive,
+	}
+
+	err = h.uc.UpdateUserStatus(ctx, argsUpdateUserStatus)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusInternalServerError,
