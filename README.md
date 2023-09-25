@@ -55,6 +55,9 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
 - [Entity](https://github.com/DoWithLogic/golang-clean-architecture/tree/main/internal/users/entities)
 - [Repository](https://github.com/DoWithLogic/golang-clean-architecture/tree/main/internal/users/repository)
 
+#### The diagram:
+![golang clean architecture](clean-architecture.png)
+
 
 # TO DO :
 
