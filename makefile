@@ -43,3 +43,9 @@ run: database-up migration-up local
 
 down : migration-down database-down
 
+mock-repository:
+	mockgen -source internal/users/repository/repository.go -destination internal/users/mock/repository_mock.go -package=mocks
+
+mock-usecase:
+	mockgen -source internal/users/usecase/usecase.go -destination internal/users/mock/usecase_mock.go -package=mocks
+

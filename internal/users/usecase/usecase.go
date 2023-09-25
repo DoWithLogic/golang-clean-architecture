@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
@@ -14,9 +12,9 @@ import (
 
 type (
 	Usecase interface {
-		CreateUser(context.Context, *entities.Users) (int64, error)
-		UpdateUser(context.Context, *entities.UpdateUsers) error
-		UpdateUserStatus(context.Context, *entities.UpdateUsers) error
+		CreateUser(ctx context.Context, user entities.CreateUser) (int64, error)
+		UpdateUser(ctx context.Context, updateData entities.UpdateUsers) error
+		UpdateUserStatus(ctx context.Context, req entities.UpdateUserStatus) error
 	}
 
 	usecase struct {
@@ -30,8 +28,8 @@ func NewUseCase(repo repository.Repository, log *zerolog.Logger, txConn *sqlx.DB
 	return &usecase{repo, log, txConn}
 }
 
-func (uc *usecase) CreateUser(ctx context.Context, user *entities.Users) (int64, error) {
-	userID, err := uc.repo.SaveNewUser(ctx, entities.NewUser(*user))
+func (uc *usecase) CreateUser(ctx context.Context, payload entities.CreateUser) (int64, error) {
+	userID, err := uc.repo.SaveNewUser(ctx, entities.NewCreateUser(payload))
 	if err != nil {
 		uc.log.Z().Err(err).Msg("[usecase]CreateUser.SaveNewUser")
 
@@ -41,7 +39,7 @@ func (uc *usecase) CreateUser(ctx context.Context, user *entities.Users) (int64,
 	return userID, nil
 }
 
-func (uc *usecase) UpdateUser(ctx context.Context, updateData *entities.UpdateUsers) error {
+func (uc *usecase) UpdateUser(ctx context.Context, updateData entities.UpdateUsers) error {
 	return func(dbTx *sqlx.DB) error {
 		txConn, err := uc.dbTx.BeginTx(ctx, nil)
 		if err != nil {
@@ -61,7 +59,7 @@ func (uc *usecase) UpdateUser(ctx context.Context, updateData *entities.UpdateUs
 			return err
 		}
 
-		if err = repoTx.UpdateUserByID(ctx, entities.NewUpdateUsers(*updateData)); err != nil {
+		if err = repoTx.UpdateUserByID(ctx, entities.NewUpdateUsers(updateData)); err != nil {
 			uc.log.Z().Err(err).Msg("[usecase]UpdateUser.UpdateUserByID")
 			return err
 		}
@@ -70,24 +68,18 @@ func (uc *usecase) UpdateUser(ctx context.Context, updateData *entities.UpdateUs
 	}(uc.dbTx)
 }
 
-func (uc *usecase) UpdateUserStatus(ctx context.Context, req *entities.UpdateUsers) error {
-	userDetail, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{})
+func (uc *usecase) UpdateUserStatus(ctx context.Context, req entities.UpdateUserStatus) error {
+	_, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{})
 	if err != nil {
 		uc.log.Z().Err(err).Msg("[usecase]UpdateUserStatus.GetUserByID")
+
 		return err
 	}
 
-	fmt.Println("user_id", userDetail.UserID)
-
-	updateStatusArgs := &entities.Users{
-		UserID:    userDetail.UserID,
-		IsActive:  req.IsActive,
-		UpdatedAt: time.Now().Format("2006-01-02 15:04:05"),
-		UpdatedBy: "martin",
-	}
-
-	if err := uc.repo.UpdateUserStatusByID(ctx, updateStatusArgs); err != nil {
+	if err := uc.repo.UpdateUserStatusByID(ctx, entities.NewUpdateUserStatus(req)); err != nil {
 		uc.log.Z().Err(err).Msg("[usecase]UpdateUserStatus.UpdateUserStatusByID")
+
+		return err
 	}
 
 	return nil

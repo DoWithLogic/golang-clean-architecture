@@ -77,17 +77,16 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
   - [ ] Request ID in logger (Header `X-Request-Id: xxx`)
 - RESTful
   - [x] Create Resource (`POST` verb)
-  - [ ] Update Resource (`PUT` verb)
-  - [ ] Partially Update Resource (`PATCH` verb)
+  - [x] Update Resource (`PUT` verb)
+  - [x] Partially Update Resource (`PATCH` verb)
   - [ ] Find Resource (`GET` verb)
     - [ ] Offset Pagination (Query param `?limit=10&page=1`)
     - [ ] Sorting (Query param `?sort=fullname DESC,id DESC`)
-  - [x] Delete resource (`DELETE` verb, idempotent)
 - Testing
-  - [ ] Table Driven Test
-  - [ ] Mocking
+  - [x] Table Driven Test
+  - [x] Mocking
 - Others
-  - [ ] Database migration and seed tool
+  - [x] Database migration and seed tool
   - [ ] Releaser
 
 ## How To Run
