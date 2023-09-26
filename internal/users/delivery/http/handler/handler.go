@@ -53,7 +53,6 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -64,7 +63,6 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -79,7 +77,6 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, dtos.NewResponseError(
 			http.StatusInternalServerError,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusInternalServerError),
 			err.Error()),
 		)
 	}
@@ -103,7 +100,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -114,7 +110,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -125,7 +120,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -133,7 +127,7 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 	argsUpdateUser := entities.UpdateUsers{
 		UserID:      userID,
 		Fullname:    payload.Fullname,
-		PhoneNumber: payload.Fullname,
+		PhoneNumber: payload.PhoneNumber,
 		UserType:    payload.UserType,
 	}
 
@@ -142,7 +136,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusInternalServerError,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusInternalServerError),
 			err.Error()),
 		)
 	}
@@ -164,7 +157,6 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			err.Error()),
 		)
 	}
@@ -178,7 +170,6 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusBadRequest,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusBadRequest),
 			ErrInvalidIsActive.Error()),
 		)
 	}
@@ -193,7 +184,6 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
 			http.StatusInternalServerError,
 			dtos.MsgFailed,
-			dtos.Text(http.StatusInternalServerError),
 			err.Error()),
 		)
 	}

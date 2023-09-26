@@ -1,4 +1,4 @@
-package custom
+package utils
 
 // Array extends `[]interface{}`, and it should be used to represent json-like data.
 type Array []interface{}
