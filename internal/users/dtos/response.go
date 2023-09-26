@@ -1,7 +1,6 @@
 package dtos
 
 import (
-	"errors"
 	"net/http"
 )
 
@@ -31,17 +30,6 @@ var (
 	MsgFailed  = map[string]string{"en": "Failed", "id": "Gagal"}
 )
 
-func UnwrapFirstError(err error) string { return UnwrapAll(err).Error() }
-
-// UnwrapAll will unwrap the underlying error until we get the first wrapped error.
-func UnwrapAll(err error) error {
-	for err != nil && errors.Unwrap(err) != nil {
-		err = errors.Unwrap(err)
-	}
-
-	return err
-}
-
 func NewResponse(statusCode int, message Message, data interface{}) Response {
 	return Response{
 		Status:  statusCode,
@@ -50,13 +38,13 @@ func NewResponse(statusCode int, message Message, data interface{}) Response {
 	}
 }
 
-func NewResponseError(statusCode int, messageStatus Message, message, details string) Response {
+func NewResponseError(statusCode int, messageStatus Message, details string) Response {
 	return Response{
 		Status:  statusCode,
 		Message: messageStatus,
 		Errors: []CaptureError{
 			{
-				Message: message,
+				Message: Text(statusCode),
 				Details: details,
 			},
 		},

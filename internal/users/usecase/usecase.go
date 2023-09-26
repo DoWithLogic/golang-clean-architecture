@@ -19,13 +19,13 @@ type (
 
 	usecase struct {
 		repo repository.Repository
-		log  *zerolog.Logger
 		dbTx *sqlx.DB
+		log  *zerolog.Logger
 	}
 )
 
-func NewUseCase(repo repository.Repository, log *zerolog.Logger, txConn *sqlx.DB) Usecase {
-	return &usecase{repo, log, txConn}
+func NewUseCase(repo repository.Repository, txConn *sqlx.DB, log *zerolog.Logger) Usecase {
+	return &usecase{repo, txConn, log}
 }
 
 func (uc *usecase) CreateUser(ctx context.Context, payload entities.CreateUser) (int64, error) {
@@ -48,7 +48,7 @@ func (uc *usecase) UpdateUser(ctx context.Context, updateData entities.UpdateUse
 
 		defer func() {
 			if err := new(database.SQL).EndTx(txConn, err); err != nil {
-				uc.log.Z().Err(err).Msg("[usecase]UpdateUser.EndTx")
+				return
 			}
 		}()
 

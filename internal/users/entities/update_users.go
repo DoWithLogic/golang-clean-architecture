@@ -16,7 +16,7 @@ func NewUpdateUsers(data UpdateUsers) UpdateUsers {
 		UserID:      data.UserID,
 		Fullname:    data.Fullname,
 		PhoneNumber: data.PhoneNumber,
-		UserType:    UserTypeRegular,
+		UserType:    data.UserType,
 		UpdatedAt:   time.Now(),
 		UpdatedBy:   "martin",
 	}

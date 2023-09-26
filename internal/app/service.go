@@ -8,16 +8,16 @@ import (
 )
 
 func (app *App) StartService() error {
-	version := app.Echo.Group("/api/v1/")
-
 	// define repository
 	repository := repository.NewRepository(app.DB, app.Log)
 
 	// define usecase
-	usecase := usecase.NewUseCase(repository, app.Log, app.DB)
+	usecase := usecase.NewUseCase(repository, app.DB, app.Log)
 
 	// define controllers
 	controller := handler.NewHandlers(usecase, app.Log)
+
+	version := app.Echo.Group("/api/v1/")
 
 	route.RouteUsers(version, controller)
 

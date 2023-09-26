@@ -2,13 +2,12 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/custom"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/database"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 )
 
 type (
@@ -25,16 +24,12 @@ type (
 	}
 )
 
-var (
-	ErrUserNotFound = errors.New("user not found")
-)
-
 func NewRepository(conn database.SQLTxConn, log *zerolog.Logger) Repository {
 	return &repository{conn, log}
 }
 
 func (repo *repository) SaveNewUser(ctx context.Context, user entities.CreateUser) (int64, error) {
-	args := custom.Array{
+	args := utils.Array{
 		user.FUllName,
 		user.PhoneNumber,
 		user.IsActive,
@@ -55,7 +50,7 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.CreateUse
 }
 
 func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUsers) error {
-	args := custom.Array{
+	args := utils.Array{
 		user.Fullname, user.Fullname,
 		user.PhoneNumber, user.PhoneNumber,
 		user.UserType, user.UserType,
@@ -79,12 +74,12 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 		return userData, err
 	}
 
-	args := custom.Array{
+	args := utils.Array{
 		userID,
 	}
 
-	row := func(idx int) custom.Array {
-		return custom.Array{
+	row := func(idx int) utils.Array {
+		return utils.Array{
 			&userData.UserID,
 			&userData.Fullname,
 			&userData.PhoneNumber,
@@ -107,15 +102,11 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 		return userData, err
 	}
 
-	if userData.UserID != userID {
-		return userData, ErrUserNotFound
-	}
-
 	return userData, err
 }
 
 func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.UpdateUserStatus) error {
-	args := custom.Array{
+	args := utils.Array{
 		req.IsActive,
 		req.UpdatedAt,
 		req.UpdatedBy,
@@ -128,10 +119,6 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.U
 		repo.log.Z().Err(err).Msg("[repository]UpdateUserStatusByID.ExecContext")
 
 		return err
-	}
-
-	if updatedID != req.UserID {
-		return errors.New("user not found")
 	}
 
 	return nil
