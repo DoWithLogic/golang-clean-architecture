@@ -36,7 +36,7 @@ func (m *MockUsecase) EXPECT() *MockUsecaseMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUsecase) CreateUser(ctx context.Context, user entities.Users) (int64, error) {
+func (m *MockUsecase) CreateUser(ctx context.Context, user entities.CreateUser) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
 	ret0, _ := ret[0].(int64)

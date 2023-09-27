@@ -33,8 +33,8 @@ func Test_repository_UpdateUserByID(t *testing.T) {
 	userID := int64(1)
 
 	t.Run("UpdateUserByID_positive_case", func(t *testing.T) {
-		user := entities.CreateUser{
-			FUllName:    "martin yonatan pasaribu",
+		user := entities.Users{
+			Fullname:    "martin yonatan pasaribu",
 			PhoneNumber: "08121213131414",
 			UserType:    entities.UserTypePremium,
 			IsActive:    true,
@@ -45,7 +45,7 @@ func Test_repository_UpdateUserByID(t *testing.T) {
 		mock.
 			ExpectExec(repository_query.InsertUsers).
 			WithArgs(
-				user.FUllName,
+				user.Fullname,
 				user.PhoneNumber,
 				user.IsActive,
 				user.UserType,

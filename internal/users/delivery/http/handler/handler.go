@@ -68,7 +68,7 @@ func (h *handlers) CreateUser(c echo.Context) error {
 	}
 
 	argsCreateUser := entities.CreateUser{
-		FUllName:    payload.FullName,
+		FullName:    payload.FullName,
 		PhoneNumber: payload.PhoneNumber,
 	}
 

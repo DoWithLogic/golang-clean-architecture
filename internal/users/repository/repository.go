@@ -12,9 +12,9 @@ import (
 
 type (
 	Repository interface {
-		SaveNewUser(context.Context, entities.CreateUser) (int64, error)
+		SaveNewUser(context.Context, entities.Users) (int64, error)
 		UpdateUserByID(context.Context, entities.UpdateUsers) error
-		GetUserByID(context.Context, int64, entities.LockingOpt) (entities.Users, error)
+		GetUserByID(context.Context, int64, ...entities.LockingOpt) (entities.Users, error)
 		UpdateUserStatusByID(context.Context, entities.UpdateUserStatus) error
 	}
 
@@ -28,9 +28,9 @@ func NewRepository(conn database.SQLTxConn, log *zerolog.Logger) Repository {
 	return &repository{conn, log}
 }
 
-func (repo *repository) SaveNewUser(ctx context.Context, user entities.CreateUser) (int64, error) {
+func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (int64, error) {
 	args := utils.Array{
-		user.FUllName,
+		user.Fullname,
 		user.PhoneNumber,
 		user.IsActive,
 		user.UserType,
@@ -69,11 +69,7 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 	return nil
 }
 
-func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt entities.LockingOpt) (userData entities.Users, err error) {
-	if err := lockOpt.Validate(); err != nil {
-		return userData, err
-	}
-
+func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt ...entities.LockingOpt) (userData entities.Users, err error) {
 	args := utils.Array{
 		userID,
 	}
@@ -91,10 +87,12 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt e
 
 	query := repository_query.GetUserByID
 
-	if lockOpt.ForUpdate {
-		query += " FOR UPDATE;"
-	} else if lockOpt.ForUpdateNoWait {
-		query += " FOR UPDATE NO WAIT;"
+	if len(lockOpt) >= 1 {
+		if lockOpt[0].ForUpdate {
+			query += " FOR UPDATE;"
+		} else {
+			query += " FOR UPDATE NO WAIT;"
+		}
 	}
 
 	if err = new(database.SQL).Query(repo.conn.QueryContext(ctx, query, args...)).Scan(row); err != nil {

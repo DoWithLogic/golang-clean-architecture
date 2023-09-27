@@ -13,11 +13,15 @@ type UpdateUserPayload struct {
 	UserType    string `json:"user_type"`
 }
 
+var (
+	ErrInvalidUserType = errors.New("invalid user_type")
+)
+
 func (cup UpdateUserPayload) Validate() error {
 	var validationFields []*validation.FieldRules
 
 	if cup.UserType != "" && (cup.UserType != entities.UserTypePremium && cup.UserType != entities.UserTypeRegular) {
-		return errors.New("invalid user_type")
+		return ErrInvalidUserType
 	}
 
 	if cup.Fullname != "" {

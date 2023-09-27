@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"time"
 )
 
 type (
@@ -11,9 +12,9 @@ type (
 		PhoneNumber string
 		UserType    string
 		IsActive    bool
-		CreatedAt   string
+		CreatedAt   time.Time
 		CreatedBy   string
-		UpdatedAt   string
+		UpdatedAt   time.Time
 		UpdatedBy   string
 	}
 
@@ -32,10 +33,13 @@ var (
 	ErrInvalidLockOpt = errors.New("can't do lock with multiple type")
 )
 
-func (locking *LockingOpt) Validate() error {
-	if locking.ForUpdate && locking.ForUpdateNoWait {
-		return ErrInvalidLockOpt
+func NewCreateUser(data CreateUser) Users {
+	return Users{
+		Fullname:    data.FullName,
+		PhoneNumber: data.PhoneNumber,
+		UserType:    UserTypeRegular,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+		CreatedBy:   "martin",
 	}
-
-	return nil
 }
