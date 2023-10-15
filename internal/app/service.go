@@ -1,25 +1,24 @@
 package app
 
 import (
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/delivery/http/handler"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/delivery/http/route"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
+	userV1 "github.com/DoWithLogic/golang-clean-architecture/internal/users/delivery/http/v1"
+	userRepository "github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
+	userUseCase "github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 )
 
 func (app *App) StartService() error {
 	// define repository
-	repository := repository.NewRepository(app.DB, app.Log)
+	userRepo := userRepository.NewRepository(app.DB, app.Log)
 
 	// define usecase
-	usecase := usecase.NewUseCase(repository, app.DB, app.Log)
+	userUC := userUseCase.NewUseCase(userRepo, app.DB, app.Log)
 
 	// define controllers
-	controller := handler.NewHandlers(usecase, app.Log)
+	userCTRL := userV1.NewHandlers(userUC, app.Log)
 
 	version := app.Echo.Group("/api/v1/")
 
-	route.RouteUsers(version, controller)
+	userV1.UserPrivateRoute(version, userCTRL)
 
 	return nil
 }

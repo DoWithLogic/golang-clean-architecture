@@ -40,7 +40,7 @@ func NewZeroLog(ctx context.Context, c ...io.Writer) *Logger {
 		case 0:
 			*z = zerolog.Nop()
 		case 1:
-			*z = zerolog.New(ws[0]).With().Timestamp().Logger()
+			*z = zerolog.New(ws[0]).With().Timestamp().Stack().Logger()
 		default:
 			*z = zerolog.New(zerolog.MultiLevelWriter(ws...))
 		}

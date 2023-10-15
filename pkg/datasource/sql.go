@@ -1,4 +1,4 @@
-package database
+package datasource
 
 import (
 	"context"

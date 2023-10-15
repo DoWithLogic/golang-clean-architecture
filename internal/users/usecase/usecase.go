@@ -5,7 +5,7 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/database"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 )
@@ -47,7 +47,7 @@ func (uc *usecase) UpdateUser(ctx context.Context, updateData entities.UpdateUse
 		}
 
 		defer func() {
-			if err := new(database.SQL).EndTx(txConn, err); err != nil {
+			if err := new(datasource.SQL).EndTx(txConn, err); err != nil {
 				return
 			}
 		}()

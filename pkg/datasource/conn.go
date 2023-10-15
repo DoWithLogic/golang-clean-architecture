@@ -1,10 +1,9 @@
-package infrastructure
+package datasource
 
 import (
 	"fmt"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 

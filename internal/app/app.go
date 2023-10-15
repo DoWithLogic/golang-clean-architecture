@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/infrastructure"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -21,19 +21,14 @@ type App struct {
 }
 
 func NewApp(ctx context.Context, cfg config.Config) *App {
-	db, err := infrastructure.NewDatabase(cfg.Database)
-	if err != nil {
-		panic(err)
-	}
-
-	echo, err := infrastructure.NewEcho(cfg.Server)
+	db, err := datasource.NewDatabase(cfg.Database)
 	if err != nil {
 		panic(err)
 	}
 
 	return &App{
 		DB:   db,
-		Echo: echo,
+		Echo: echo.New(),
 		Log:  zerolog.NewZeroLog(ctx, os.Stdout),
 		Cfg:  cfg,
 	}
@@ -45,6 +40,8 @@ func (app *App) Start() error {
 
 		return err
 	}
+
+	app.Echo.Debug = app.Cfg.Server.Debug
 
 	return app.Echo.StartServer(&http.Server{
 		Addr:         fmt.Sprintf(":%s", app.Cfg.Server.RESTPort),
