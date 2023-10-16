@@ -2,12 +2,11 @@ package usecase
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
-	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -19,13 +18,12 @@ type (
 
 	usecase struct {
 		repo repository.Repository
-		dbTx *sqlx.DB
 		log  *zerolog.Logger
 	}
 )
 
-func NewUseCase(repo repository.Repository, txConn *sqlx.DB, log *zerolog.Logger) Usecase {
-	return &usecase{repo, txConn, log}
+func NewUseCase(repo repository.Repository, log *zerolog.Logger) Usecase {
+	return &usecase{repo, log}
 }
 
 func (uc *usecase) CreateUser(ctx context.Context, payload entities.CreateUser) (int64, error) {
@@ -40,32 +38,22 @@ func (uc *usecase) CreateUser(ctx context.Context, payload entities.CreateUser) 
 }
 
 func (uc *usecase) UpdateUser(ctx context.Context, updateData entities.UpdateUsers) error {
-	return func(dbTx *sqlx.DB) error {
-		txConn, err := uc.dbTx.BeginTx(ctx, nil)
-		if err != nil {
-			return err
-		}
+	return uc.repo.Atomic(ctx, &sql.TxOptions{}, func(tx repository.Repository) error {
 
-		defer func() {
-			if err := new(datasource.SQL).EndTx(txConn, err); err != nil {
-				return
-			}
-		}()
-
-		repoTx := repository.NewRepository(txConn, uc.log)
-
-		if _, err := repoTx.GetUserByID(ctx, updateData.UserID, entities.LockingOpt{ForUpdate: true}); err != nil {
+		if _, err := tx.GetUserByID(ctx, updateData.UserID, entities.LockingOpt{PessimisticLocking: true}); err != nil {
 			uc.log.Z().Err(err).Msg("[usecase]UpdateUser.GetUserByID")
+
 			return err
 		}
 
-		if err = repoTx.UpdateUserByID(ctx, entities.NewUpdateUsers(updateData)); err != nil {
+		if err := tx.UpdateUserByID(ctx, entities.NewUpdateUsers(updateData)); err != nil {
 			uc.log.Z().Err(err).Msg("[usecase]UpdateUser.UpdateUserByID")
+
 			return err
 		}
 
 		return nil
-	}(uc.dbTx)
+	})
 }
 
 func (uc *usecase) UpdateUserStatus(ctx context.Context, req entities.UpdateUserStatus) error {

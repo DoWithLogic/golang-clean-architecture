@@ -2,16 +2,20 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
+	"github.com/jmoiron/sqlx"
 )
 
 type (
 	Repository interface {
+		Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error
+
 		SaveNewUser(context.Context, entities.Users) (int64, error)
 		UpdateUserByID(context.Context, entities.UpdateUsers) error
 		GetUserByID(context.Context, int64, ...entities.LockingOpt) (entities.Users, error)
@@ -19,13 +23,34 @@ type (
 	}
 
 	repository struct {
-		conn datasource.SQLTxConn
+		db   *sqlx.DB
+		conn datasource.ConnTx
 		log  *zerolog.Logger
 	}
 )
 
-func NewRepository(conn datasource.SQLTxConn, log *zerolog.Logger) Repository {
-	return &repository{conn, log}
+func NewRepository(c *sqlx.DB, l *zerolog.Logger) Repository {
+	return &repository{conn: c, log: l, db: c}
+}
+
+// Atomic implements vendor.Repository for transaction query
+func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error {
+	txConn, err := r.db.BeginTx(ctx, opt)
+	if err != nil {
+		r.log.Z().Err(err).Msg("[repository]Atomic.BeginTxx")
+
+		return err
+	}
+
+	newRepository := &repository{conn: txConn, db: r.db}
+
+	repo(newRepository)
+
+	if err := new(datasource.DataSource).EndTx(txConn, err); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (int64, error) {
@@ -39,7 +64,7 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (i
 	}
 
 	var userID int64
-	err := new(datasource.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.InsertUsers, args...)).Scan(nil, &userID)
+	err := new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.InsertUsers, args...)).Scan(nil, &userID)
 	if err != nil {
 		repo.log.Z().Err(err).Msg("[repository]SaveNewUser.ExecContext")
 
@@ -59,7 +84,7 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 		user.UserID,
 	}
 
-	err := new(datasource.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.UpdateUsers, args...)).Scan(nil, nil)
+	err := new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.UpdateUsers, args...)).Scan(nil, nil)
 	if err != nil {
 		repo.log.Z().Err(err).Msg("[repository]UpdateUserByID.ExecContext")
 
@@ -69,7 +94,7 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 	return nil
 }
 
-func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt ...entities.LockingOpt) (userData entities.Users, err error) {
+func (repo *repository) GetUserByID(ctx context.Context, userID int64, options ...entities.LockingOpt) (userData entities.Users, err error) {
 	args := utils.Array{
 		userID,
 	}
@@ -87,15 +112,11 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, lockOpt .
 
 	query := repository_query.GetUserByID
 
-	if len(lockOpt) >= 1 {
-		if lockOpt[0].ForUpdate {
-			query += " FOR UPDATE;"
-		} else {
-			query += " FOR UPDATE NO WAIT;"
-		}
+	if len(options) >= 1 && options[0].PessimisticLocking {
+		query += " FOR UPDATE"
 	}
 
-	if err = new(datasource.SQL).Query(repo.conn.QueryContext(ctx, query, args...)).Scan(row); err != nil {
+	if err = new(datasource.DataSource).QuerySQL(repo.conn.QueryContext(ctx, query, args...)).Scan(row); err != nil {
 		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryContext")
 		return userData, err
 	}
@@ -112,7 +133,7 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.U
 	}
 
 	var updatedID int64
-	err := new(datasource.SQL).Exec(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, &updatedID)
+	err := new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, &updatedID)
 	if err != nil {
 		repo.log.Z().Err(err).Msg("[repository]UpdateUserStatusByID.ExecContext")
 

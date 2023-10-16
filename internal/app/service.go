@@ -11,7 +11,7 @@ func (app *App) StartService() error {
 	userRepo := userRepository.NewRepository(app.DB, app.Log)
 
 	// define usecase
-	userUC := userUseCase.NewUseCase(userRepo, app.DB, app.Log)
+	userUC := userUseCase.NewUseCase(userRepo, app.Log)
 
 	// define controllers
 	userCTRL := userV1.NewHandlers(userUC, app.Log)

@@ -6,9 +6,11 @@ package mocks
 
 import (
 	context "context"
+	sql "database/sql"
 	reflect "reflect"
 
 	entities "github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
+	repository "github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -33,6 +35,20 @@ func NewMockRepository(ctrl *gomock.Controller) *MockRepository {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
+}
+
+// Atomic mocks base method.
+func (m *MockRepository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(repository.Repository) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Atomic", ctx, opt, repo)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Atomic indicates an expected call of Atomic.
+func (mr *MockRepositoryMockRecorder) Atomic(ctx, opt, repo interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Atomic", reflect.TypeOf((*MockRepository)(nil).Atomic), ctx, opt, repo)
 }
 
 // GetUserByID mocks base method.

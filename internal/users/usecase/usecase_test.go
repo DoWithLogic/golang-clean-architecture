@@ -49,7 +49,6 @@ func Test_usecase_CreateUser(t *testing.T) {
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
-		nil,
 		zerolog.NewZeroLog(ctx, os.Stdout),
 	)
 
@@ -104,11 +103,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(
-		repo,
-		nil,
-		zerolog.NewZeroLog(ctx, os.Stdout),
-	)
+	uc := usecase.NewUseCase(repo, zerolog.NewZeroLog(ctx, os.Stdout))
 
 	args := entities.UpdateUserStatus{
 		UserID:   1,
