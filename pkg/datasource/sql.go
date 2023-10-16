@@ -13,22 +13,17 @@ import (
 )
 
 type (
-	BeginTx interface {
+	Conn interface {
 		BeginTx(ctx context.Context, opts *sql.TxOptions) (tx *sql.Tx, err error)
-	}
-	ExecContext interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (res sql.Result, err error)
-	}
-	PingContext interface {
 		PingContext(ctx context.Context) (err error)
+		io.Closer
+		ConnTx
 	}
-	PrepareContext interface {
+
+	ConnTx interface {
+		ExecContext(ctx context.Context, query string, args ...interface{}) (res sql.Result, err error)
 		PrepareContext(ctx context.Context, query string) (stmt *sql.Stmt, err error)
-	}
-	QueryContext interface {
 		QueryContext(ctx context.Context, query string, args ...interface{}) (rows *sql.Rows, err error)
-	}
-	QueryRowContext interface {
 		QueryRowContext(ctx context.Context, query string, args ...interface{}) (row *sql.Row)
 	}
 
@@ -37,11 +32,6 @@ type (
 	}
 
 	Query interface {
-		// Scan accept do, a func that accept `i int` as index and returns a List
-		// of pointer.
-		//  List == nil   // break the loop
-		//  len(List) < 1 // skip the current loop
-		//  len(List) > 0 // assign the pointer, must be same as the length of columns
 		Scan(row func(i int) utils.Array) (err error)
 	}
 
@@ -55,30 +45,17 @@ type (
 		err     error
 	}
 
-	SQLConn interface {
-		BeginTx
-		io.Closer
-		PingContext
-		SQLTxConn
-	}
-
-	SQLTxConn interface {
-		ExecContext
-		PrepareContext
-		QueryContext
-		QueryRowContext
-	}
-
-	SQL struct{}
+	DataSource struct{}
 )
 
 var (
-	_   SQLConn   = (*sql.Conn)(nil)
-	_   SQLConn   = (*sql.DB)(nil)
-	_   SQLTxConn = (*sql.Tx)(nil)
-	log           = zerolog.NewZeroLog(context.Background(), os.Stdout)
+	_   Conn   = (*sql.Conn)(nil)
+	_   Conn   = (*sql.DB)(nil)
+	_   ConnTx = (*sql.Tx)(nil)
+	log        = zerolog.NewZeroLog(context.Background(), os.Stdout)
 )
 
+// datasource errors
 var (
 	ErrNoColumnReturned   = errors.New("no columns returned")
 	ErrDataNotFound       = errors.New("data not found")
@@ -193,20 +170,15 @@ func (x query) Scan(row func(i int) utils.Array) error {
 	return err
 }
 
-func (SQL) Exec(sqlResult sql.Result, err error) Exec { return exec{sqlResult, err} }
+func (DataSource) ExecSQL(sqlResult sql.Result, err error) exec {
+	return exec{sqlResult, err}
+}
 
-func (SQL) Query(sqlRows *sql.Rows, err error) Query { return query{sqlRows, err} }
+func (DataSource) QuerySQL(sqlRows *sql.Rows, err error) Query {
+	return query{sqlRows, err}
+}
 
-// EndTx will end transaction with provided *sql.Tx and error. The tx argument
-// should be valid, and then will check the err, if any error occurred, will
-// commencing the ROLLBACK else will COMMIT the transaction.
-//
-//	txc := XSQLTxConn(db) // shared between *sql.Tx, *sql.DB and *sql.Conn
-//	if tx, err := db.BeginTx(ctx, nil); err == nil && tx != nil {
-//	  defer func() { err = xsql.EndTx(tx, err) }()
-//	  txc = tx
-//	}
-func (SQL) EndTx(tx *sql.Tx, err error) error {
+func (DataSource) EndTx(tx *sql.Tx, err error) error {
 	if tx == nil {
 		log.Z().Err(ErrInvalidTransaction).Msg("[database:EndTx]")
 

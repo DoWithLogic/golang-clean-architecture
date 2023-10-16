@@ -19,8 +19,7 @@ type (
 	}
 
 	LockingOpt struct {
-		ForUpdateNoWait bool
-		ForUpdate       bool
+		PessimisticLocking bool
 	}
 )
 
