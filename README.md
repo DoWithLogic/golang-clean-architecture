@@ -1,4 +1,4 @@
-## Description
+## Golang Clean Architecture
 
 This is an example of implementation of Clean Architecture with S.O.L.I.D Principles in Go (Golang) projects.
 
