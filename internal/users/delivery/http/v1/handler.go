@@ -72,7 +72,7 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		PhoneNumber: payload.PhoneNumber,
 	}
 
-	createdID, err := h.uc.CreateUser(ctx, argsCreateUser)
+	createdData, err := h.uc.CreateUser(ctx, argsCreateUser)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dtos.NewResponseError(
 			http.StatusInternalServerError,
@@ -81,7 +81,7 @@ func (h *handlers) CreateUser(c echo.Context) error {
 		)
 	}
 
-	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, map[string]any{"user_id": createdID}))
+	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, createdData))
 }
 
 func (h *handlers) UpdateUser(c echo.Context) error {
