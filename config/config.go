@@ -9,8 +9,9 @@ import (
 
 type (
 	Config struct {
-		Database DatabaseConfig
-		Server   ServerConfig
+		Database       DatabaseConfig
+		Server         ServerConfig
+		Authentication AuthenticationConfig
 	}
 
 	DatabaseConfig struct {
@@ -30,6 +31,10 @@ type (
 		Environment  string        `mapstructure:"env"`
 		ReadTimeout  time.Duration `mapstructure:"read_time_out"`
 		WriteTimeout time.Duration `mapstructure:"write_time_out"`
+	}
+
+	AuthenticationConfig struct {
+		Key string `mapstructure:"key"`
 	}
 )
 

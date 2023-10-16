@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/DoWithLogic/golang-clean-architecture/config"
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	mocks "github.com/DoWithLogic/golang-clean-architecture/internal/users/mock"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
@@ -50,6 +52,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 	uc := usecase.NewUseCase(
 		repo,
 		zerolog.NewZeroLog(ctx, os.Stdout),
+		config.Config{Authentication: config.AuthenticationConfig{Key: "secret-key"}},
 	)
 
 	newUser := entities.CreateUser{
@@ -91,9 +94,9 @@ func Test_usecase_CreateUser(t *testing.T) {
 				)).
 			Return(int64(0), errors.New("something errors"))
 
-		userID, err := uc.CreateUser(ctx, newUser)
+		createdData, err := uc.CreateUser(ctx, newUser)
 		require.Error(t, err)
-		require.Equal(t, userID, int64(0))
+		require.Equal(t, createdData, dtos.CreateUserResponse(dtos.CreateUserResponse{UserID: 0, Token: "", ExpiredAt: 0}))
 	})
 }
 
@@ -103,7 +106,11 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, zerolog.NewZeroLog(ctx, os.Stdout))
+	uc := usecase.NewUseCase(
+		repo,
+		zerolog.NewZeroLog(ctx, os.Stdout),
+		config.Config{Authentication: config.AuthenticationConfig{Key: "secret-key"}},
+	)
 
 	args := entities.UpdateUserStatus{
 		UserID:   1,

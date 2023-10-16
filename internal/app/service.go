@@ -11,14 +11,14 @@ func (app *App) StartService() error {
 	userRepo := userRepository.NewRepository(app.DB, app.Log)
 
 	// define usecase
-	userUC := userUseCase.NewUseCase(userRepo, app.Log)
+	userUC := userUseCase.NewUseCase(userRepo, app.Log, app.Cfg)
 
 	// define controllers
 	userCTRL := userV1.NewHandlers(userUC, app.Log)
 
 	version := app.Echo.Group("/api/v1/")
 
-	userV1.UserPrivateRoute(version, userCTRL)
+	userV1.UserPrivateRoute(version, userCTRL, app.Cfg)
 
 	return nil
 }

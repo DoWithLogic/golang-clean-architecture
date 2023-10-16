@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	dtos "github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	entities "github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -36,10 +37,10 @@ func (m *MockUsecase) EXPECT() *MockUsecaseMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUsecase) CreateUser(ctx context.Context, user entities.CreateUser) (int64, error) {
+func (m *MockUsecase) CreateUser(ctx context.Context, user entities.CreateUser) (dtos.CreateUserResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
-	ret0, _ := ret[0].(int64)
+	ret0, _ := ret[0].(dtos.CreateUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
