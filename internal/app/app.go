@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
