@@ -12,7 +12,7 @@ Rule of Clean Architecture by Uncle Bob
 
 More at https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html
 
-## What S.O.L.I.D Principle is?
+## 🔍 What S.O.L.I.D Principle is?
 
 SOLID is an acronym representing five essential design principles for writing maintainable and scalable software. These principles were introduced by Robert C. Martin (Uncle Bob) and have become fundamental guidelines for good software design.
 
@@ -47,7 +47,7 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
 - Increased adaptability to changing requirements.
 
 
-## Layers of Domain
+## 🔥 Layers of Domain
 
 - [Controller / Delivery](https://github.com/DoWithLogic/golang-clean-architecture/tree/main/internal/users/delivery)
 - [Data Transfer Object (DTO)](https://github.com/DoWithLogic/golang-clean-architecture/tree/main/internal/users/dtos)
@@ -59,7 +59,7 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
 ![golang clean architecture](clean-architecture.png)
 
 
-# TO DO :
+# 🦄 TO DO :
 
 - Application
   - [x] [Go-Standards](https://github.com/golang-standards/project-layout) Project Layout
@@ -87,9 +87,9 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
   - [x] Mocking
 - Others
   - [x] Database migration and seed tool
-  - [ ] Releaser
+  - [x] Releaser
 
-## How To Run
+## 🏗️ How To Run
 
 setup environment and running on local
 ```bash
@@ -97,7 +97,7 @@ make run    # Start the database, run migrations, and start the application loca
 ```
 
 
-## References
+## ✨ References
 
 Golang:
 - [Go Documentation](https://golang.org/doc/)
@@ -108,16 +108,6 @@ Golang:
 - [go-clean-arch](https://github.com/bxcodec/go-clean-arch)
 
 
-## Wiki
-
-Check [wiki](https://github.com/typical-go/typical-go/wiki) for more documentation
-- [App Framework](https://github.com/typical-go/typical-go/wiki/App-Framework)
-- [Standard Build Task](https://github.com/typical-go/typical-go/wiki/Standard-Build-Tasks)
-- [Custom Build Tasks](https://github.com/typical-go/typical-go/wiki/Custom-Build-Tasks)
-- [Generate Code](https://github.com/typical-go/typical-go/wiki/Generate-Code)
-- [Generate Mock](https://github.com/typical-go/typical-go/wiki/Generate-Mock)
-
-
-## License
+## 🛡️ License
 
 This project is licensed under the [MIT License](https://github.com/DoWithLogic/golang-clean-architecture/blob/main/LICENSE).
