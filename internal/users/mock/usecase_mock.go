@@ -36,45 +36,78 @@ func (m *MockUsecase) EXPECT() *MockUsecaseMockRecorder {
 	return m.recorder
 }
 
-// CreateUser mocks base method.
-func (m *MockUsecase) CreateUser(ctx context.Context, user entities.CreateUser) (dtos.CreateUserResponse, error) {
+// Create mocks base method.
+func (m *MockUsecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (int64, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
-	ret0, _ := ret[0].(dtos.CreateUserResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Create", ctx, payload)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// CreateUser indicates an expected call of CreateUser.
-func (mr *MockUsecaseMockRecorder) CreateUser(ctx, user interface{}) *gomock.Call {
+// Create indicates an expected call of Create.
+func (mr *MockUsecaseMockRecorder) Create(ctx, payload interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockUsecase)(nil).CreateUser), ctx, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUsecase)(nil).Create), ctx, payload)
 }
 
-// UpdateUser mocks base method.
-func (m *MockUsecase) UpdateUser(ctx context.Context, updateData entities.UpdateUsers) error {
+// Detail mocks base method.
+func (m *MockUsecase) Detail(ctx context.Context, id int64) (dtos.UserDetailResponse, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUser", ctx, updateData)
+	ret := m.ctrl.Call(m, "Detail", ctx, id)
+	ret0, _ := ret[0].(dtos.UserDetailResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Detail indicates an expected call of Detail.
+func (mr *MockUsecaseMockRecorder) Detail(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Detail", reflect.TypeOf((*MockUsecase)(nil).Detail), ctx, id)
+}
+
+// Login mocks base method.
+func (m *MockUsecase) Login(ctx context.Context, request dtos.UserLoginRequest) (dtos.UserLoginResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", ctx, request)
+	ret0, _ := ret[0].(dtos.UserLoginResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockUsecaseMockRecorder) Login(ctx, request interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUsecase)(nil).Login), ctx, request)
+}
+
+// PartialUpdate mocks base method.
+func (m *MockUsecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PartialUpdate", ctx, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUser indicates an expected call of UpdateUser.
-func (mr *MockUsecaseMockRecorder) UpdateUser(ctx, updateData interface{}) *gomock.Call {
+// PartialUpdate indicates an expected call of PartialUpdate.
+func (mr *MockUsecaseMockRecorder) PartialUpdate(ctx, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockUsecase)(nil).UpdateUser), ctx, updateData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PartialUpdate", reflect.TypeOf((*MockUsecase)(nil).PartialUpdate), ctx, data)
 }
 
-// UpdateUserStatus mocks base method.
-func (m *MockUsecase) UpdateUserStatus(ctx context.Context, req entities.UpdateUserStatus) error {
+// UpdateStatus mocks base method.
+func (m *MockUsecase) UpdateStatus(ctx context.Context, req entities.UpdateUserStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserStatus", ctx, req)
+	ret := m.ctrl.Call(m, "UpdateStatus", ctx, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUserStatus indicates an expected call of UpdateUserStatus.
-func (mr *MockUsecaseMockRecorder) UpdateUserStatus(ctx, req interface{}) *gomock.Call {
+// UpdateStatus indicates an expected call of UpdateStatus.
+func (mr *MockUsecaseMockRecorder) UpdateStatus(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserStatus", reflect.TypeOf((*MockUsecase)(nil).UpdateUserStatus), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStatus", reflect.TypeOf((*MockUsecase)(nil).UpdateStatus), ctx, req)
 }

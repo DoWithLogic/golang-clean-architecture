@@ -10,6 +10,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func Test_repository_UpdateUserByID(t *testing.T) {
 		user := entities.Users{
 			Fullname:    "martin yonatan pasaribu",
 			PhoneNumber: "08121213131414",
-			UserType:    entities.UserTypePremium,
+			UserType:    constant.UserTypePremium,
 			IsActive:    true,
 			CreatedAt:   currentTime,
 			CreatedBy:   "admin",

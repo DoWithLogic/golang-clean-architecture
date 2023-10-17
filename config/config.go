@@ -34,7 +34,9 @@ type (
 	}
 
 	AuthenticationConfig struct {
-		Key string `mapstructure:"key"`
+		Key       string `mapstructure:"key"`
+		SecretKey string `mapstructure:"secret_key"`
+		SaltKey   string `mapstructure:"salt_key"`
 	}
 )
 

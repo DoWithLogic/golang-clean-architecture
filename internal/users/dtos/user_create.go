@@ -4,9 +4,11 @@ import (
 	"github.com/invopop/validation"
 )
 
-type CreateUserPayload struct {
+type CreateUserRequest struct {
 	FullName    string `json:"fullname"`
 	PhoneNumber string `json:"phone_number"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
 }
 
 type CreateUserResponse struct {
@@ -15,9 +17,11 @@ type CreateUserResponse struct {
 	ExpiredAt int64  `json:"expired_at"`
 }
 
-func (cup CreateUserPayload) Validate() error {
+func (cup CreateUserRequest) Validate() error {
 	return validation.ValidateStruct(&cup,
 		validation.Field(&cup.FullName, validation.Required, validation.Length(0, 50)),
 		validation.Field(&cup.PhoneNumber, validation.Required, validation.Length(0, 13)),
+		validation.Field(&cup.Email, validation.Required),
+		validation.Field(&cup.Password, validation.Required),
 	)
 }

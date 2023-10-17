@@ -10,13 +10,17 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	usecases "github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils/response"
 	"github.com/labstack/echo/v4"
 )
 
 type (
 	Handlers interface {
+		Login(c echo.Context) error
 		CreateUser(c echo.Context) error
+		UserDetail(c echo.Context) error
 		UpdateUser(c echo.Context) error
 		UpdateUserStatus(c echo.Context) error
 	}
@@ -40,19 +44,40 @@ func NewHandlers(uc usecases.Usecase, log *zerolog.Logger) Handlers {
 	return &handlers{uc, log}
 }
 
+func (h *handlers) Login(c echo.Context) error {
+	var (
+		request dtos.UserLoginRequest
+	)
+
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+	}
+
+	if err := request.Validate(); err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+	}
+
+	authData, httpCode, err := h.uc.Login(c.Request().Context(), request)
+	if err != nil {
+		return c.JSON(httpCode, response.NewResponseError(httpCode, response.MsgFailed, err.Error()))
+	}
+
+	return c.JSON(httpCode, response.NewResponse(httpCode, response.MsgSuccess, authData))
+}
+
 func (h *handlers) CreateUser(c echo.Context) error {
 	var (
 		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		payload     dtos.CreateUserPayload
+		payload     dtos.CreateUserRequest
 	)
 	defer cancel()
 
 	if err := c.Bind(&payload); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]CreateUser.Bind")
 
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(
 			http.StatusBadRequest,
-			dtos.MsgFailed,
+			response.MsgFailed,
 			err.Error()),
 		)
 	}
@@ -60,87 +85,65 @@ func (h *handlers) CreateUser(c echo.Context) error {
 	if err := payload.Validate(); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]CreateUser.Validate")
 
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(
 			http.StatusBadRequest,
-			dtos.MsgFailed,
+			response.MsgFailed,
 			err.Error()),
 		)
 	}
 
-	argsCreateUser := entities.CreateUser{
-		FullName:    payload.FullName,
-		PhoneNumber: payload.PhoneNumber,
-	}
-
-	createdData, err := h.uc.CreateUser(ctx, argsCreateUser)
+	userID, httpCode, err := h.uc.Create(ctx, payload)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dtos.NewResponseError(
-			http.StatusInternalServerError,
-			dtos.MsgFailed,
+		return c.JSON(httpCode, response.NewResponseError(
+			httpCode,
+			response.MsgFailed,
 			err.Error()),
 		)
 	}
 
-	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, createdData))
+	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, map[string]int64{"id": userID}))
+}
+
+func (h *handlers) UserDetail(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
+	defer cancel()
+
+	userID := c.Get("identity").(*middleware.CustomClaims).UserID
+
+	data, code, err := h.uc.Detail(ctx, userID)
+	if err != nil {
+		return c.JSON(code, response.NewResponseError(code, response.MsgFailed, err.Error()))
+	}
+
+	return c.JSON(code, response.NewResponse(code, response.MsgSuccess, data))
 }
 
 func (h *handlers) UpdateUser(c echo.Context) error {
 	var (
 		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		payload     dtos.UpdateUserPayload
+		request     dtos.UpdateUserRequest
 	)
 	defer cancel()
 
-	h.log.Z().Info().Msg("[handlers]UpdateUser")
+	request.UserID = c.Get("identity").(entities.Identity).UserID
 
-	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		h.log.Z().Err(err).Msg("[handlers]UpdateUser.ParseParam")
-
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusBadRequest,
-			dtos.MsgFailed,
-			err.Error()),
-		)
-	}
-
-	if err := c.Bind(&payload); err != nil {
+	if err := c.Bind(&request); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Bind")
 
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusBadRequest,
-			dtos.MsgFailed,
-			err.Error()),
-		)
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 
-	if err := payload.Validate(); err != nil {
+	if err := request.Validate(); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Validate")
 
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusBadRequest,
-			dtos.MsgFailed,
-			err.Error()),
-		)
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 
-	argsUpdateUser := entities.UpdateUsers{
-		UserID:      userID,
-		Fullname:    payload.Fullname,
-		PhoneNumber: payload.PhoneNumber,
-		UserType:    payload.UserType,
+	if err := h.uc.PartialUpdate(ctx, request); err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
 	}
 
-	err = h.uc.UpdateUser(ctx, argsUpdateUser)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusInternalServerError,
-			dtos.MsgFailed,
-			err.Error()),
-		)
-	}
-
-	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, nil))
+	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, nil))
 }
 
 func (h *handlers) UpdateUserStatus(c echo.Context) error {
@@ -154,9 +157,9 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 	if err != nil {
 		h.log.Z().Err(err).Msg("[handlers]UpdateUser.ParseParam")
 
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(
 			http.StatusBadRequest,
-			dtos.MsgFailed,
+			response.MsgFailed,
 			err.Error()),
 		)
 	}
@@ -167,11 +170,7 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 	case BooleanTextTrue:
 		payload.IsActive = true
 	default:
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusBadRequest,
-			dtos.MsgFailed,
-			ErrInvalidIsActive.Error()),
-		)
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, ErrInvalidIsActive.Error()))
 	}
 
 	argsUpdateUserStatus := entities.UpdateUserStatus{
@@ -179,14 +178,10 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		IsActive: payload.IsActive,
 	}
 
-	err = h.uc.UpdateUserStatus(ctx, argsUpdateUserStatus)
+	err = h.uc.UpdateStatus(ctx, argsUpdateUserStatus)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, dtos.NewResponseError(
-			http.StatusInternalServerError,
-			dtos.MsgFailed,
-			err.Error()),
-		)
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, dtos.NewResponse(http.StatusOK, dtos.MsgSuccess, nil))
+	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, nil))
 }
