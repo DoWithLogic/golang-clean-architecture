@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	mocks "github.com/DoWithLogic/golang-clean-architecture/internal/users/mock"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -52,32 +54,34 @@ func Test_usecase_CreateUser(t *testing.T) {
 	uc := usecase.NewUseCase(
 		repo,
 		zerolog.NewZeroLog(ctx, os.Stdout),
-		config.Config{Authentication: config.AuthenticationConfig{Key: "secret-key"}},
+		config.Config{Authentication: config.AuthenticationConfig{Key: "DoWithLogic!@#", SecretKey: "s3cr#tK3y!@#"}},
 	)
 
-	newUser := entities.CreateUser{
+	newUser := dtos.CreateUserRequest{
 		FullName:    "fullname",
 		PhoneNumber: "081236548974",
-		UserType:    entities.UserTypePremium,
-		IsActive:    true,
+		Email:       "martinyonatann@testing.com",
+		Password:    "testingPwd",
 	}
 
 	t.Run("positive_case_create_user", func(t *testing.T) {
+		repo.EXPECT().IsUserExist(ctx, newUser.Email).Return(false)
 
 		repo.EXPECT().
 			SaveNewUser(ctx,
 				createUserMatcher(
 					entities.Users{
-						Fullname:    "fullname",
-						PhoneNumber: "081236548974",
-						UserType:    entities.UserTypeRegular,
+						Fullname:    newUser.FullName,
+						PhoneNumber: newUser.PhoneNumber,
+						UserType:    constant.UserTypeRegular,
 						IsActive:    true,
 					},
 				)).
 			Return(int64(1), nil)
 
-		userID, err := uc.CreateUser(ctx, newUser)
+		userID, httpCode, err := uc.Create(ctx, newUser)
 		require.NoError(t, err)
+		require.Equal(t, httpCode, http.StatusOK)
 		require.NotNil(t, userID)
 	})
 
@@ -88,15 +92,16 @@ func Test_usecase_CreateUser(t *testing.T) {
 					entities.Users{
 						Fullname:    "fullname",
 						PhoneNumber: "081236548974",
-						UserType:    entities.UserTypeRegular,
+						UserType:    constant.UserTypeRegular,
 						IsActive:    true,
 					},
 				)).
 			Return(int64(0), errors.New("something errors"))
 
-		createdData, err := uc.CreateUser(ctx, newUser)
+		userID, httpCode, err := uc.Create(ctx, newUser)
 		require.Error(t, err)
-		require.Equal(t, createdData, dtos.CreateUserResponse(dtos.CreateUserResponse{UserID: 0, Token: "", ExpiredAt: 0}))
+		require.Equal(t, httpCode, http.StatusInternalServerError)
+		require.Equal(t, userID, 0)
 	})
 }
 
@@ -126,7 +131,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 			UpdateUserStatusByID(ctx, gomock.Any()).
 			Return(nil)
 
-		err := uc.UpdateUserStatus(ctx, args)
+		err := uc.UpdateStatus(ctx, args)
 		require.NoError(t, err)
 	})
 
@@ -135,7 +140,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 			GetUserByID(ctx, args.UserID, gomock.Any()).
 			Return(entities.Users{}, errors.New("something errors"))
 
-		err := uc.UpdateUserStatus(ctx, args)
+		err := uc.UpdateStatus(ctx, args)
 		require.Error(t, err)
 	})
 
@@ -148,7 +153,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 			UpdateUserStatusByID(ctx, gomock.Any()).
 			Return(errors.New("there was error"))
 
-		err := uc.UpdateUserStatus(ctx, args)
+		err := uc.UpdateStatus(ctx, args)
 		require.Error(t, err)
 	})
 

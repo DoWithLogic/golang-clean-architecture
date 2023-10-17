@@ -8,27 +8,20 @@ import (
 	"github.com/dgrijalva/jwt-go"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils/response"
 	"github.com/labstack/echo/v4"
 )
 
 // CustomClaims represents the custom claims you want to include in the JWT payload.
 type CustomClaims struct {
-	UserID int64 `json:"user_id"`
+	UserID int64  `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 
-func GenerateJWT(userID int64, expiredAt int64, secretKey string) (string, error) {
-	// Create custom claims
-	claims := CustomClaims{
-		UserID: userID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiredAt,
-		},
-	}
-
+func GenerateJWT(data CustomClaims, secretKey string) (string, error) {
 	// Create the token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, data)
 
 	// Sign the token with the secret key
 	tokenString, err := token.SignedString([]byte(secretKey))
@@ -44,7 +37,7 @@ func AuthorizeJWT(cfg config.Config) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			auth, err := extractBearerToken(c)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, dtos.NewResponseError(http.StatusUnauthorized, dtos.MsgFailed, err.Error()))
+				return c.JSON(http.StatusUnauthorized, response.NewResponseError(http.StatusUnauthorized, response.MsgFailed, err.Error()))
 			}
 
 			token, err := jwt.ParseWithClaims(*auth, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -52,7 +45,7 @@ func AuthorizeJWT(cfg config.Config) echo.MiddlewareFunc {
 			})
 
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, dtos.NewResponseError(http.StatusUnauthorized, dtos.MsgFailed, err.Error()))
+				return c.JSON(http.StatusUnauthorized, response.NewResponseError(http.StatusUnauthorized, response.MsgFailed, err.Error()))
 			}
 
 			if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
@@ -61,7 +54,7 @@ func AuthorizeJWT(cfg config.Config) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			return c.JSON(http.StatusUnauthorized, dtos.NewResponseError(http.StatusUnauthorized, dtos.MsgFailed, err.Error()))
+			return c.JSON(http.StatusUnauthorized, response.NewResponseError(http.StatusUnauthorized, response.MsgFailed, err.Error()))
 		}
 	}
 }

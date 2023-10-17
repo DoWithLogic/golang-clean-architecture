@@ -9,6 +9,8 @@ import (
 func UserPrivateRoute(version *echo.Group, h Handlers, cfg config.Config) {
 	users := version.Group("users")
 	users.POST("", h.CreateUser)
+	users.POST("/login", h.Login)
+	users.GET("/detail", h.UserDetail, middleware.AuthorizeJWT(cfg))
 	users.PATCH("/:id", h.UpdateUser, middleware.AuthorizeJWT(cfg))
 	users.PUT("/:id", h.UpdateUserStatus, middleware.AuthorizeJWT(cfg))
 }

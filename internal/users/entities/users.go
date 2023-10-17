@@ -1,13 +1,19 @@
 package entities
 
 import (
-	"errors"
 	"time"
+
+	"github.com/DoWithLogic/golang-clean-architecture/config"
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 )
 
 type (
 	Users struct {
 		UserID      int64
+		Email       string
+		Password    string
 		Fullname    string
 		PhoneNumber string
 		UserType    string
@@ -23,22 +29,15 @@ type (
 	}
 )
 
-const (
-	UserTypeRegular = "regular_user"
-	UserTypePremium = "premium_user"
-)
-
-var (
-	ErrInvalidLockOpt = errors.New("can't do lock with multiple type")
-)
-
-func NewCreateUser(data CreateUser) Users {
+func NewCreateUser(data dtos.CreateUserRequest, cfg config.Config) Users {
 	return Users{
 		Fullname:    data.FullName,
+		Email:       data.Email,
+		Password:    utils.Encrypt(data.Password, cfg),
 		PhoneNumber: data.PhoneNumber,
-		UserType:    UserTypeRegular,
+		UserType:    constant.UserTypeRegular,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
-		CreatedBy:   "martin",
+		CreatedBy:   constant.UserSystem,
 	}
 }

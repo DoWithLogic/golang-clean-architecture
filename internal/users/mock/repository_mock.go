@@ -51,6 +51,21 @@ func (mr *MockRepositoryMockRecorder) Atomic(ctx, opt, repo interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Atomic", reflect.TypeOf((*MockRepository)(nil).Atomic), ctx, opt, repo)
 }
 
+// GetUserByEmail mocks base method.
+func (m *MockRepository) GetUserByEmail(arg0 context.Context, arg1 string) (entities.Users, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByEmail", arg0, arg1)
+	ret0, _ := ret[0].(entities.Users)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByEmail indicates an expected call of GetUserByEmail.
+func (mr *MockRepositoryMockRecorder) GetUserByEmail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*MockRepository)(nil).GetUserByEmail), arg0, arg1)
+}
+
 // GetUserByID mocks base method.
 func (m *MockRepository) GetUserByID(arg0 context.Context, arg1 int64, arg2 ...entities.LockingOpt) (entities.Users, error) {
 	m.ctrl.T.Helper()
@@ -69,6 +84,20 @@ func (mr *MockRepositoryMockRecorder) GetUserByID(arg0, arg1 interface{}, arg2 .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockRepository)(nil).GetUserByID), varargs...)
+}
+
+// IsUserExist mocks base method.
+func (m *MockRepository) IsUserExist(ctx context.Context, email string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsUserExist", ctx, email)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsUserExist indicates an expected call of IsUserExist.
+func (mr *MockRepositoryMockRecorder) IsUserExist(ctx, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsUserExist", reflect.TypeOf((*MockRepository)(nil).IsUserExist), ctx, email)
 }
 
 // SaveNewUser mocks base method.

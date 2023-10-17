@@ -11,6 +11,10 @@ server:
 database:
   host: localhost
   port: 3306
-  name: golang-clean-architecture
+  name: users
   user: mysql
   password: pwd
+
+authentication:
+  key: DoWithLogic!@#
+  secret_key: s3cr#tK3y!@#
