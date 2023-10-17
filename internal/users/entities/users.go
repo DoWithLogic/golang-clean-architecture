@@ -38,6 +38,6 @@ func NewCreateUser(data dtos.CreateUserRequest, cfg config.Config) Users {
 		UserType:    constant.UserTypeRegular,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
-		CreatedBy:   constant.UserSystem,
+		CreatedBy:   "SYSTEM",
 	}
 }

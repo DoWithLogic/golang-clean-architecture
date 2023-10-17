@@ -17,4 +17,5 @@ database:
 
 authentication:
   key: DoWithLogic!@#
-  secret_key: s3cr#tK3y!@#
+  secret_key: s3cr#tK3y!@#v001
+  salt_key: s4ltK3y!@#ddv001
