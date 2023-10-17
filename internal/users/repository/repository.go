@@ -79,6 +79,7 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (u
 
 func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUsers) error {
 	args := utils.Array{
+		user.Email, user.Email,
 		user.Fullname, user.Fullname,
 		user.PhoneNumber, user.PhoneNumber,
 		user.UserType, user.UserType,

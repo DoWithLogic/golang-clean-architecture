@@ -1,19 +1,17 @@
 package constant
 
-import "errors"
-
+// user type category
 const (
 	UserTypeRegular = "regular_user"
 	UserTypePremium = "premium_user"
-
-	UserSystem = "SYSTEM"
-)
-
-var (
-	ErrInvalidLockOpt = errors.New("can't do lock with multiple type")
 )
 
 const (
-	LengthOfSalt      = 16
-	LengthOfRandomKey = 32
+	UserInactive = iota
+	UserActive
 )
+
+var MapStatus = map[int]bool{
+	UserInactive: false,
+	UserActive:   true,
+}

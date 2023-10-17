@@ -23,7 +23,7 @@ type (
 		Login(ctx context.Context, request dtos.UserLoginRequest) (response dtos.UserLoginResponse, httpCode int, err error)
 		Create(ctx context.Context, payload dtos.CreateUserRequest) (userID int64, httpCode int, err error)
 		PartialUpdate(ctx context.Context, data dtos.UpdateUserRequest) error
-		UpdateStatus(ctx context.Context, req entities.UpdateUserStatus) error
+		UpdateStatus(ctx context.Context, req dtos.UpdateUserStatusRequest) error
 		Detail(ctx context.Context, id int64) (detail dtos.UserDetailResponse, httpCode int, err error)
 	}
 
@@ -44,19 +44,15 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 		return response, http.StatusInternalServerError, err
 	}
 
-	uc.log.Z().Err(nil).Str("decrypted_password", dataLogin.Password).Str("password", request.Password).Msg("[Login]")
-
 	if !strings.EqualFold(utils.Decrypt(dataLogin.Password, uc.cfg), request.Password) {
 		return response, http.StatusUnauthorized, apperror.ErrInvalidPassword
 	}
-
-	expiredAt := time.Now().Add(time.Minute * 15).Unix()
 
 	identityData := middleware.CustomClaims{
 		UserID: dataLogin.UserID,
 		Email:  dataLogin.Email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiredAt,
+			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
 		},
 	}
 
@@ -67,7 +63,7 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 
 	response = dtos.UserLoginResponse{
 		AccessToken: token,
-		ExpiredAt:   expiredAt,
+		ExpiredAt:   utils.UnixToDuration(identityData.ExpiresAt),
 	}
 
 	return response, http.StatusOK, nil
@@ -111,7 +107,7 @@ func (uc *usecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserReques
 	})
 }
 
-func (uc *usecase) UpdateStatus(ctx context.Context, req entities.UpdateUserStatus) error {
+func (uc *usecase) UpdateStatus(ctx context.Context, req dtos.UpdateUserStatusRequest) error {
 	_, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{})
 	if err != nil {
 		uc.log.Z().Err(err).Msg("[usecase]UpdateUserStatus.GetUserByID")

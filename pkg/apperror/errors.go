@@ -7,4 +7,5 @@ var (
 	ErrInvalidUserType   = errors.New("invalid user_type")
 	ErrInvalidPassword   = errors.New("invalid password")
 	ErrFailedGenerateJWT = errors.New("failed generate access token")
+	ErrInvalidIsActive   = errors.New("invalid is_active")
 )

@@ -3,6 +3,7 @@ package dtos
 import (
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
+	"github.com/invopop/validation"
 )
 
 type UpdateUserRequest struct {
@@ -12,6 +13,7 @@ type UpdateUserRequest struct {
 	UserType    string `json:"user_type"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
+	UpdateBy    string `json:"-"`
 }
 
 var ()
@@ -21,5 +23,8 @@ func (cup UpdateUserRequest) Validate() error {
 		return apperror.ErrInvalidUserType
 	}
 
-	return nil
+	return validation.ValidateStruct(&cup,
+		validation.Field(&cup.UserID, validation.NotNil),
+		validation.Field(&cup.UpdateBy, validation.NotNil),
+	)
 }

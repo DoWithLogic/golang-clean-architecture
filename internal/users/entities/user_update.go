@@ -8,8 +8,8 @@ import (
 
 type UpdateUsers struct {
 	UserID      int64
-	Fullname    string
 	Email       string
+	Fullname    string
 	Password    string
 	PhoneNumber string
 	UserType    string
@@ -24,6 +24,6 @@ func NewUpdateUsers(data dtos.UpdateUserRequest) UpdateUsers {
 		PhoneNumber: data.PhoneNumber,
 		UserType:    data.UserType,
 		UpdatedAt:   time.Now(),
-		UpdatedBy:   "martin",
+		UpdatedBy:   data.UpdateBy,
 	}
 }

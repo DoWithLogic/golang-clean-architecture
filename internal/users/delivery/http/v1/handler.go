@@ -2,13 +2,10 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	usecases "github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
@@ -34,10 +31,6 @@ type (
 const (
 	BooleanTextTrue  = "true"
 	BooleanTextFalse = "false"
-)
-
-var (
-	ErrInvalidIsActive = errors.New("invalid is_active")
 )
 
 func NewHandlers(uc usecases.Usecase, log *zerolog.Logger) Handlers {
@@ -121,17 +114,19 @@ func (h *handlers) UserDetail(c echo.Context) error {
 func (h *handlers) UpdateUser(c echo.Context) error {
 	var (
 		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
+		identity    = c.Get("identity").(*middleware.CustomClaims)
 		request     dtos.UpdateUserRequest
 	)
 	defer cancel()
-
-	request.UserID = c.Get("identity").(entities.Identity).UserID
 
 	if err := c.Bind(&request); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Bind")
 
 		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
+
+	request.UserID = identity.UserID
+	request.UpdateBy = identity.Email
 
 	if err := request.Validate(); err != nil {
 		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Validate")
@@ -149,38 +144,21 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 func (h *handlers) UpdateUserStatus(c echo.Context) error {
 	var (
 		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		payload     dtos.UpdateUserStatusPayload
+		identity    = c.Get("identity").(*middleware.CustomClaims)
+		request     = dtos.UpdateUserStatusRequest{UserID: identity.UserID, UpdateBy: identity.Email}
 	)
 	defer cancel()
 
-	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		h.log.Z().Err(err).Msg("[handlers]UpdateUser.ParseParam")
-
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(
-			http.StatusBadRequest,
-			response.MsgFailed,
-			err.Error()),
-		)
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 
-	switch c.QueryParam("is_active") {
-	case BooleanTextFalse:
-		payload.IsActive = false
-	case BooleanTextTrue:
-		payload.IsActive = true
-	default:
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, ErrInvalidIsActive.Error()))
+	if err := request.Validate(); err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 
-	argsUpdateUserStatus := entities.UpdateUserStatus{
-		UserID:   userID,
-		IsActive: payload.IsActive,
-	}
-
-	err = h.uc.UpdateStatus(ctx, argsUpdateUserStatus)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
+	if err := h.uc.UpdateStatus(ctx, request); err != nil {
+		return c.JSON(http.StatusInternalServerError, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, nil))

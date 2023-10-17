@@ -11,6 +11,6 @@ func UserPrivateRoute(version *echo.Group, h Handlers, cfg config.Config) {
 	users.POST("", h.CreateUser)
 	users.POST("/login", h.Login)
 	users.GET("/detail", h.UserDetail, middleware.AuthorizeJWT(cfg))
-	users.PATCH("/:id", h.UpdateUser, middleware.AuthorizeJWT(cfg))
-	users.PUT("/:id", h.UpdateUserStatus, middleware.AuthorizeJWT(cfg))
+	users.PATCH("/update", h.UpdateUser, middleware.AuthorizeJWT(cfg))
+	users.PUT("/update/status", h.UpdateUserStatus, middleware.AuthorizeJWT(cfg))
 }
