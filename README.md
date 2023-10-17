@@ -106,6 +106,7 @@ Golang:
 - [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
 - [typical-rest-server](https://github.com/typical-go/typical-rest-server/)
 - [go-clean-arch](https://github.com/bxcodec/go-clean-arch)
+- [a-clean-way-to-implement-database-transaction-in-golang](https://dev.to/techschoolguru/a-clean-way-to-implement-database-transaction-in-golang-2ba)
 
 
 ## 🛡️ License
