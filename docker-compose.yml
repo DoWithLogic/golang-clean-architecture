@@ -17,3 +17,14 @@ services:
       interval: 0.5s
       timeout: 10s
       retries: 10
+  golang-clean-architecture:
+    build:
+      context: .
+      dockerfile: Dockerfile # Specify the path to your Dockerfile
+    ports:
+      - 8080:8080
+      - 9090:9090
+    volumes:
+      - ./config/config-local.yaml:/app/config/config-local.yaml
+    depends_on:
+      - mysql-db

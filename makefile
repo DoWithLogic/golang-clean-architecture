@@ -24,9 +24,12 @@ wait-for-mysql:
 	@echo "MySQL is up and running!"
 
 database-up: 
-	docker compose up -d 
+	docker compose up mysql-db -d
 
-database-down:
+service-up:
+	docker compose up golang-clean-architecture -d
+
+docker-down:
 	docker compose down 
 
 migration-up: wait-for-mysql
@@ -36,12 +39,9 @@ migration-down:
 	GOOSE_DRIVER=mysql GOOSE_DBSTRING="mysql:pwd@tcp(localhost:3306)/users?parseTime=true" goose -dir=$(MIGRATION_DIR) down
 
 
-local:
-	env="local" go run cmd/main.go
+run: database-up migration-up service-up
 
-run: database-up migration-up local
-
-down : migration-down database-down
+down : migration-down docker-down
 
 mock-repository:
 	mockgen -source internal/users/repository/repository.go -destination internal/users/mock/repository_mock.go -package=mocks
