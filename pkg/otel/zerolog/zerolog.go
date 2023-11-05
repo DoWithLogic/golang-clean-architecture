@@ -49,8 +49,8 @@ func NewZeroLog(ctx context.Context, c ...io.Writer) *Logger {
 	}
 
 	dir := os.TempDir()
-	tempOUT, _ := os.Create(dir + "/loan-" + logID + "-out.log")
-	tempERR, _ := os.Create(dir + "/loan-" + logID + "-err.log")
+	tempOUT, _ := os.Create(dir + "/golang-clean-architecture-" + logID + "-out.log")
+	tempERR, _ := os.Create(dir + "/golang-clean-architecture-" + logID + "-err.log")
 
 	return &Logger{log.New(z, "", 0), z, tempOUT, tempERR}
 }
