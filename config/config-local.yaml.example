@@ -9,7 +9,7 @@ Server:
   WriteTimeOut: 5s
 
 Database:
-  Host: localhost
+  Host: mysql-db
   Port: 3306
   Name: users
   User: mysql
