@@ -7,11 +7,11 @@ const (
 )
 
 const (
-	UserInactive = iota
-	UserActive
+	UserInactive = "0"
+	UserActive   = "1"
 )
 
-var MapStatus = map[int]bool{
+var MapStatus = map[string]bool{
 	UserInactive: false,
 	UserActive:   true,
 }

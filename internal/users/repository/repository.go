@@ -37,7 +37,7 @@ func NewRepository(c *sqlx.DB, l *zerolog.Logger) Repository {
 
 // Atomic implements vendor.Repository for transaction query
 func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error {
-	txConn, err := r.db.BeginTx(ctx, opt)
+	txConn, err := r.db.BeginTxx(ctx, opt)
 	if err != nil {
 		r.log.Z().Err(err).Msg("[repository]Atomic.BeginTxx")
 
@@ -122,8 +122,8 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, options .
 		query += " FOR UPDATE"
 	}
 
-	if err = new(datasource.DataSource).QuerySQL(repo.conn.QueryContext(ctx, query, args...)).Scan(row); err != nil {
-		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryContext")
+	if err = new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, query, args...)).Scan(row); err != nil {
+		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryxContext")
 		return userData, err
 	}
 
@@ -159,9 +159,9 @@ func (repo *repository) IsUserExist(ctx context.Context, email string) bool {
 		}
 	}
 
-	err := new(datasource.DataSource).QuerySQL(repo.conn.QueryContext(ctx, repository_query.IsUserExist, args...)).Scan(row)
+	err := new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, repository_query.IsUserExist, args...)).Scan(row)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]IsUserExist.QueryContext")
+		repo.log.Z().Err(err).Msg("[repository]IsUserExist.QueryxContext")
 
 		return false
 	}
@@ -182,9 +182,9 @@ func (repo *repository) GetUserByEmail(ctx context.Context, email string) (userD
 		}
 	}
 
-	err = new(datasource.DataSource).QuerySQL(repo.conn.QueryContext(ctx, repository_query.GetUserByEmail, args...)).Scan(row)
+	err = new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, repository_query.GetUserByEmail, args...)).Scan(row)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryContext")
+		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryxContext")
 		return entities.Users{}, err
 	}
 
