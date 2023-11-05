@@ -8,4 +8,5 @@ var (
 	ErrInvalidPassword   = errors.New("invalid password")
 	ErrFailedGenerateJWT = errors.New("failed generate access token")
 	ErrInvalidIsActive   = errors.New("invalid is_active")
+	ErrStatusValue       = errors.New("status should be 0 or 1")
 )

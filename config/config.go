@@ -15,28 +15,28 @@ type (
 	}
 
 	DatabaseConfig struct {
-		Host     string `mapstructure:"host"`
-		Port     int    `mapstructure:"port"`
-		Name     string `mapstructure:"name"`
-		User     string `mapstructure:"user"`
-		Password string `mapstructure:"password"`
+		Host     string
+		Port     int
+		Name     string
+		User     string
+		Password string
 	}
 
 	ServerConfig struct {
-		Name         string        `mapstructure:"name"`
-		Version      string        `mapstructure:"version"`
-		RPCPort      string        `mapstructure:"rpc_port"`
-		RESTPort     string        `mapstructure:"rest_port"`
-		Debug        bool          `mapstructure:"debug"`
-		Environment  string        `mapstructure:"env"`
-		ReadTimeout  time.Duration `mapstructure:"read_time_out"`
-		WriteTimeout time.Duration `mapstructure:"write_time_out"`
+		Name         string
+		Version      string
+		RPCPort      string
+		RESTPort     string
+		Debug        bool
+		Environment  string
+		ReadTimeout  time.Duration
+		WriteTimeout time.Duration
 	}
 
 	AuthenticationConfig struct {
-		Key       string `mapstructure:"key"`
-		SecretKey string `mapstructure:"secret_key"`
-		SaltKey   string `mapstructure:"salt_key"`
+		Key       string
+		SecretKey string
+		SaltKey   string
 	}
 )
 

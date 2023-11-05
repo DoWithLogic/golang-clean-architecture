@@ -10,21 +10,22 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
+	"github.com/jmoiron/sqlx"
 )
 
 type (
 	Conn interface {
-		BeginTx(ctx context.Context, opts *sql.TxOptions) (tx *sql.Tx, err error)
+		BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
 		PingContext(ctx context.Context) (err error)
 		io.Closer
 		ConnTx
 	}
 
 	ConnTx interface {
-		ExecContext(ctx context.Context, query string, args ...interface{}) (res sql.Result, err error)
-		PrepareContext(ctx context.Context, query string) (stmt *sql.Stmt, err error)
-		QueryContext(ctx context.Context, query string, args ...interface{}) (rows *sql.Rows, err error)
-		QueryRowContext(ctx context.Context, query string, args ...interface{}) (row *sql.Row)
+		ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+		PreparexContext(ctx context.Context, query string) (*sqlx.Stmt, error)
+		QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
+		QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
 	}
 
 	Exec interface {
@@ -41,7 +42,7 @@ type (
 	}
 
 	query struct {
-		sqlRows *sql.Rows
+		sqlRows *sqlx.Rows
 		err     error
 	}
 
@@ -49,9 +50,9 @@ type (
 )
 
 var (
-	_   Conn   = (*sql.Conn)(nil)
-	_   Conn   = (*sql.DB)(nil)
-	_   ConnTx = (*sql.Tx)(nil)
+	_   Conn   = (*sqlx.Conn)(nil)
+	_   Conn   = (*sqlx.DB)(nil)
+	_   ConnTx = (*sqlx.Tx)(nil)
 	log        = zerolog.NewZeroLog(context.Background(), os.Stdout)
 )
 
@@ -174,11 +175,11 @@ func (DataSource) ExecSQL(sqlResult sql.Result, err error) exec {
 	return exec{sqlResult, err}
 }
 
-func (DataSource) QuerySQL(sqlRows *sql.Rows, err error) Query {
+func (DataSource) QuerySQL(sqlRows *sqlx.Rows, err error) Query {
 	return query{sqlRows, err}
 }
 
-func (DataSource) EndTx(tx *sql.Tx, err error) error {
+func (DataSource) EndTx(tx *sqlx.Tx, err error) error {
 	if tx == nil {
 		log.Z().Err(ErrInvalidTransaction).Msg("[database:EndTx]")
 
