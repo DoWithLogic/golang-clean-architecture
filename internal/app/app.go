@@ -10,6 +10,7 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -44,6 +45,7 @@ func (app *App) Start() error {
 	}
 
 	app.Echo.Debug = app.Cfg.Server.Debug
+	app.Echo.Use(middleware.AppCors())
 
 	return app.Echo.StartServer(&http.Server{
 		Addr:         fmt.Sprintf(":%s", app.Cfg.Server.RESTPort),
