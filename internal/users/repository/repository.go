@@ -35,7 +35,7 @@ func NewRepository(c *sqlx.DB, l *zerolog.Logger) Repository {
 	return &repository{conn: c, log: l, db: c}
 }
 
-// Atomic implements vendor.Repository for transaction query
+// Atomic implements Repository Interface for transaction query
 func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error {
 	txConn, err := r.db.BeginTxx(ctx, opt)
 	if err != nil {
