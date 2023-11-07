@@ -46,6 +46,7 @@ func (app *App) Start() error {
 
 	app.Echo.Debug = app.Cfg.Server.Debug
 	app.Echo.Use(middleware.AppCors())
+	app.Echo.Use(middleware.CacheWithRevalidation)
 
 	return app.Echo.StartServer(&http.Server{
 		Addr:         fmt.Sprintf(":%s", app.Cfg.Server.RESTPort),

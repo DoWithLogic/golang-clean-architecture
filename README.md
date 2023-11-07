@@ -72,8 +72,8 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
 - HTTP Server
   - [x] [Echo framework](https://echo.labstack.com/)
   - [x] Server Side Caching
-    - [ ] Cache but revalidate (Header `Cache-Control: no-cache`)
-    - [ ] Set Expiration Time (Header `Cache-Control: max-age=120`)
+    - [x] Cache but revalidate (Header `Cache-Control: no-cache`)
+    - [x] Set Expiration Time (Header `Cache-Control: max-age=120`)
   - [ ] Request ID in logger (Header `X-Request-Id: xxx`)
 - RESTful
   - [x] Create Resource (`POST` verb)
