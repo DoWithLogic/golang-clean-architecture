@@ -74,7 +74,6 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
   - [x] Server Side Caching
     - [x] Cache but revalidate (Header `Cache-Control: no-cache`)
     - [x] Set Expiration Time (Header `Cache-Control: max-age=120`)
-  - [ ] Request ID in logger (Header `X-Request-Id: xxx`)
 - RESTful
   - [x] Create Resource (`POST` verb)
   - [x] Update Resource (`PUT` verb)
