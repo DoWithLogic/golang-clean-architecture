@@ -4,43 +4,27 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 	"github.com/jmoiron/sqlx"
 )
 
-type (
-	Repository interface {
-		Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error
+type repository struct {
+	db   *sqlx.DB
+	conn datasource.ConnTx
+}
 
-		GetUserByID(context.Context, int64, ...entities.LockingOpt) (entities.Users, error)
-		GetUserByEmail(context.Context, string) (entities.Users, error)
-		SaveNewUser(context.Context, entities.Users) (int64, error)
-		UpdateUserByID(context.Context, entities.UpdateUsers) error
-		UpdateUserStatusByID(context.Context, entities.UpdateUserStatus) error
-		IsUserExist(ctx context.Context, email string) bool
-	}
-
-	repository struct {
-		db   *sqlx.DB
-		conn datasource.ConnTx
-		log  *zerolog.Logger
-	}
-)
-
-func NewRepository(c *sqlx.DB, l *zerolog.Logger) Repository {
-	return &repository{conn: c, log: l, db: c}
+func NewRepository(c *sqlx.DB) users.Repository {
+	return &repository{conn: c, db: c}
 }
 
 // Atomic implements Repository Interface for transaction query
-func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx Repository) error) error {
+func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(tx users.Repository) error) error {
 	txConn, err := r.db.BeginTxx(ctx, opt)
 	if err != nil {
-		r.log.Z().Err(err).Msg("[repository]Atomic.BeginTxx")
-
 		return err
 	}
 
@@ -69,8 +53,6 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (u
 
 	err = new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.InsertUsers, args...)).Scan(nil, &userID)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]SaveNewUser.ExecContext")
-
 		return userID, err
 	}
 
@@ -90,8 +72,6 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 
 	err := new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.UpdateUsers, args...)).Scan(nil, nil)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]UpdateUserByID.ExecContext")
-
 		return err
 	}
 
@@ -123,7 +103,6 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, options .
 	}
 
 	if err = new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, query, args...)).Scan(row); err != nil {
-		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryxContext")
 		return userData, err
 	}
 
@@ -141,8 +120,6 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.U
 	var updatedID int64
 	err := new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.UpdateUserStatusByID, args...)).Scan(nil, &updatedID)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]UpdateUserStatusByID.ExecContext")
-
 		return err
 	}
 
@@ -161,8 +138,6 @@ func (repo *repository) IsUserExist(ctx context.Context, email string) bool {
 
 	err := new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, repository_query.IsUserExist, args...)).Scan(row)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]IsUserExist.QueryxContext")
-
 		return false
 	}
 
@@ -184,7 +159,6 @@ func (repo *repository) GetUserByEmail(ctx context.Context, email string) (userD
 
 	err = new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, repository_query.GetUserByEmail, args...)).Scan(row)
 	if err != nil {
-		repo.log.Z().Err(err).Msg("[repository]GetUserByID.QueryxContext")
 		return entities.Users{}, err
 	}
 

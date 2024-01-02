@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,10 +16,10 @@ import (
 )
 
 type App struct {
-	DB   *sqlx.DB
-	Echo *echo.Echo
-	Log  *zerolog.Logger
-	Cfg  config.Config
+	db   *sqlx.DB
+	echo *echo.Echo
+	log  *zerolog.Logger
+	cfg  config.Config
 }
 
 func NewApp(ctx context.Context, cfg config.Config) *App {
@@ -30,27 +29,23 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	}
 
 	return &App{
-		DB:   db,
-		Echo: echo.New(),
-		Log:  zerolog.NewZeroLog(ctx, os.Stdout),
-		Cfg:  cfg,
+		db:   db,
+		echo: echo.New(),
+		log:  zerolog.NewZeroLog(ctx, os.Stdout),
+		cfg:  cfg,
 	}
 }
 
 func (app *App) Start() error {
 	if err := app.StartService(); err != nil {
-		app.Log.Z().Err(err).Msg("[app]StartService")
+		app.log.Z().Err(err).Msg("[app]StartService")
 
 		return err
 	}
 
-	app.Echo.Debug = app.Cfg.Server.Debug
-	app.Echo.Use(middleware.AppCors())
-	app.Echo.Use(middleware.CacheWithRevalidation)
+	app.echo.Debug = app.cfg.Server.Debug
+	app.echo.Use(middleware.AppCors())
+	app.echo.Use(middleware.CacheWithRevalidation)
 
-	return app.Echo.StartServer(&http.Server{
-		Addr:         fmt.Sprintf(":%s", app.Cfg.Server.RESTPort),
-		ReadTimeout:  app.Cfg.Server.ReadTimeout,
-		WriteTimeout: app.Cfg.Server.WriteTimeout,
-	})
+	return app.echo.Start(fmt.Sprintf(":%s", app.cfg.Server.RESTPort))
 }
