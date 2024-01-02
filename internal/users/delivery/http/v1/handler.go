@@ -5,36 +5,19 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
-	usecases "github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils/response"
 	"github.com/labstack/echo/v4"
 )
 
-type (
-	Handlers interface {
-		Login(c echo.Context) error
-		CreateUser(c echo.Context) error
-		UserDetail(c echo.Context) error
-		UpdateUser(c echo.Context) error
-		UpdateUserStatus(c echo.Context) error
-	}
+type handlers struct {
+	uc users.Usecase
+}
 
-	handlers struct {
-		uc  usecases.Usecase
-		log *zerolog.Logger
-	}
-)
-
-const (
-	BooleanTextTrue  = "true"
-	BooleanTextFalse = "false"
-)
-
-func NewHandlers(uc usecases.Usecase, log *zerolog.Logger) Handlers {
-	return &handlers{uc, log}
+func NewHandlers(uc users.Usecase) *handlers {
+	return &handlers{uc}
 }
 
 func (h *handlers) Login(c echo.Context) error {
@@ -66,8 +49,6 @@ func (h *handlers) CreateUser(c echo.Context) error {
 	defer cancel()
 
 	if err := c.Bind(&payload); err != nil {
-		h.log.Z().Err(err).Msg("[handlers]CreateUser.Bind")
-
 		return c.JSON(http.StatusBadRequest, response.NewResponseError(
 			http.StatusBadRequest,
 			response.MsgFailed,
@@ -76,8 +57,6 @@ func (h *handlers) CreateUser(c echo.Context) error {
 	}
 
 	if err := payload.Validate(); err != nil {
-		h.log.Z().Err(err).Msg("[handlers]CreateUser.Validate")
-
 		return c.JSON(http.StatusBadRequest, response.NewResponseError(
 			http.StatusBadRequest,
 			response.MsgFailed,
@@ -120,8 +99,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 	defer cancel()
 
 	if err := c.Bind(&request); err != nil {
-		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Bind")
-
 		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 
@@ -129,8 +106,6 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 	request.UpdateBy = identity.Email
 
 	if err := request.Validate(); err != nil {
-		h.log.Z().Err(err).Msg("[handlers]UpdateUser.Validate")
-
 		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
 	}
 

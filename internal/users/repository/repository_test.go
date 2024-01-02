@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +25,7 @@ func Test_repository_UpdateUserByID(t *testing.T) {
 
 	var (
 		conn = sqlx.NewDb(db, "sqlmock")
-		repo = repository.NewRepository(conn, zerolog.NewZeroLog(context.Background(), os.Stdout))
+		repo = repository.NewRepository(conn)
 	)
 
 	currentTime := time.Now()

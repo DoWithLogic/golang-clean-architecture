@@ -6,11 +6,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func UserPrivateRoute(version *echo.Group, h Handlers, cfg config.Config) {
-	users := version.Group("users")
-	users.POST("", h.CreateUser)
-	users.POST("/login", h.Login)
-	users.GET("/detail", h.UserDetail, middleware.AuthorizeJWT(cfg))
-	users.PATCH("/update", h.UpdateUser, middleware.AuthorizeJWT(cfg))
-	users.PUT("/update/status", h.UpdateUserStatus, middleware.AuthorizeJWT(cfg))
+func (h *handlers) UserRoutes(domain *echo.Group, cfg config.Config) {
+	domain.POST("", h.CreateUser)
+	domain.POST("/login", h.Login)
+	domain.GET("/detail", h.UserDetail, middleware.AuthorizeJWT(cfg))
+	domain.PATCH("/update", h.UpdateUser, middleware.AuthorizeJWT(cfg))
+	domain.PUT("/update/status", h.UpdateUserStatus, middleware.AuthorizeJWT(cfg))
 }

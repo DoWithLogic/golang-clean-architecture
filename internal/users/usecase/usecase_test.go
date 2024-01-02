@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -57,7 +55,6 @@ func Test_usecase_CreateUser(t *testing.T) {
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
-		zerolog.NewZeroLog(ctx, os.Stdout),
 		config.Config{
 			Authentication: config.AuthenticationConfig{
 				Key:       "DoWithLogic!@#",
@@ -135,7 +132,6 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
-		zerolog.NewZeroLog(ctx, os.Stdout),
 		config.Config{Authentication: config.AuthenticationConfig{Key: "secret-key"}},
 	)
 
@@ -188,7 +184,7 @@ func Test_usecase_Detail(t *testing.T) {
 
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, zerolog.NewZeroLog(ctx, os.Stdout), config.Config{})
+	uc := usecase.NewUseCase(repo, config.Config{})
 
 	var id int64 = 1
 
@@ -242,7 +238,7 @@ func Test_usecase_Login(t *testing.T) {
 
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, zerolog.NewZeroLog(ctx, os.Stdout), config)
+	uc := usecase.NewUseCase(repo, config)
 
 	returnedUser := entities.Users{
 		UserID:   1,
@@ -301,9 +297,8 @@ func Test_usecase_PartialUpdate(t *testing.T) {
 		}
 	)
 
-	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, zerolog.NewZeroLog(ctx, os.Stdout), config)
+	uc := usecase.NewUseCase(repo, config)
 
 	repo.EXPECT().Atomic(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 

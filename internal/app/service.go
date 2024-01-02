@@ -7,18 +7,13 @@ import (
 )
 
 func (app *App) StartService() error {
-	// define repository
-	userRepo := userRepository.NewRepository(app.DB, app.Log)
+	userRepo := userRepository.NewRepository(app.db)
+	userUC := userUseCase.NewUseCase(userRepo, app.cfg)
+	userCTRL := userV1.NewHandlers(userUC)
 
-	// define usecase
-	userUC := userUseCase.NewUseCase(userRepo, app.Log, app.Cfg)
+	domain := app.echo.Group("/api/v1/users")
 
-	// define controllers
-	userCTRL := userV1.NewHandlers(userUC, app.Log)
-
-	version := app.Echo.Group("/api/v1/")
-
-	userV1.UserPrivateRoute(version, userCTRL, app.Cfg)
+	userCTRL.UserRoutes(domain, app.cfg)
 
 	return nil
 }
