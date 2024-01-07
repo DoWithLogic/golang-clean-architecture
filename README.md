@@ -65,7 +65,7 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
   - [x] [Go-Standards](https://github.com/golang-standards/project-layout) Project Layout
   - [x] Environment Variable Configuration
   - [x] Health-Check and Debug API
-  - [ ] Graceful Shutdown
+  - [x] Graceful Shutdown
 - Layered architecture
   - [x] [SOLID Principle](https://en.wikipedia.org/wiki/SOLID)
   - [x] Database Transaction

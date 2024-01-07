@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -13,6 +16,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 type App struct {
@@ -36,12 +40,28 @@ func NewApp(ctx context.Context, cfg config.Config) *App {
 	}
 }
 
-func (app *App) Start() error {
-	if err := app.StartService(); err != nil {
+func (app *App) Run() error {
+	if err := app.startService(); err != nil {
 		app.log.Z().Err(err).Msg("[app]StartService")
 
 		return err
 	}
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT)
+
+	go func() {
+		<-quit
+		log.Info("Server is shutting down...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		app.db.Close()
+		app.echo.Shutdown(ctx)
+	}()
 
 	app.echo.Debug = app.cfg.Server.Debug
 	app.echo.Use(middleware.AppCors())

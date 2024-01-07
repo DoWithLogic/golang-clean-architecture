@@ -7,7 +7,7 @@ import (
 )
 
 func (h *handlers) UserRoutes(domain *echo.Group, cfg config.Config) {
-	domain.POST("", h.CreateUser)
+	domain.POST("/", h.CreateUser)
 	domain.POST("/login", h.Login)
 	domain.GET("/detail", h.UserDetail, middleware.AuthorizeJWT(cfg))
 	domain.PATCH("/update", h.UpdateUser, middleware.AuthorizeJWT(cfg))

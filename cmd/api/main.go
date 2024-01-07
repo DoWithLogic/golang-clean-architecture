@@ -19,8 +19,5 @@ func main() {
 		panic(err)
 	}
 
-	app := app.NewApp(context.Background(), cfg)
-	if err := app.Start(); err != nil {
-		panic(err)
-	}
+	app.NewApp(context.Background(), cfg).Run()
 }
