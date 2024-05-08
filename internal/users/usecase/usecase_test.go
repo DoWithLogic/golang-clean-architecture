@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -14,25 +13,26 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	mocks "github.com/DoWithLogic/golang-clean-architecture/internal/users/mock"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
+	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
-func createUserMatcher(user entities.Users) gomock.Matcher {
+func createUserMatcher(user entities.User) gomock.Matcher {
 	return eqUserMatcher{
 		users: user,
 	}
 }
 
 type eqUserMatcher struct {
-	users entities.Users
+	users entities.User
 }
 
 func (e eqUserMatcher) Matches(x interface{}) bool {
-	arg, ok := x.(entities.Users)
+	arg, ok := x.(entities.User)
 	if !ok {
 		return false
 	}
@@ -57,9 +57,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 		repo,
 		config.Config{
 			Authentication: config.AuthenticationConfig{
-				Key:       "DoWithLogic!@#",
-				SecretKey: "s3cr#tK3y!@#v001",
-				SaltKey:   "s4ltK3y!@#ddv001",
+				Key: "DoWithLogic!@#",
 			},
 		},
 	)
@@ -77,7 +75,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 		repo.EXPECT().
 			SaveNewUser(ctx,
 				createUserMatcher(
-					entities.Users{
+					entities.User{
 						Fullname:    newUser.FullName,
 						PhoneNumber: newUser.PhoneNumber,
 						UserType:    constant.UserTypeRegular,
@@ -86,18 +84,16 @@ func Test_usecase_CreateUser(t *testing.T) {
 				)).
 			Return(int64(1), nil)
 
-		userID, httpCode, err := uc.Create(ctx, newUser)
+		userID, err := uc.Create(ctx, newUser)
 		require.NoError(t, err)
-		require.Equal(t, httpCode, http.StatusOK)
 		require.NotNil(t, userID)
 	})
 
 	t.Run("negative_email_already_use", func(t *testing.T) {
 		repo.EXPECT().IsUserExist(ctx, newUser.Email).Return(true)
 
-		userID, httpCode, err := uc.Create(ctx, newUser)
+		userID, err := uc.Create(ctx, newUser)
 		require.EqualError(t, apperror.ErrEmailAlreadyExist, err.Error())
-		require.Equal(t, httpCode, http.StatusConflict)
 		require.Equal(t, userID, int64(0))
 	})
 
@@ -107,7 +103,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 		repo.EXPECT().
 			SaveNewUser(ctx,
 				createUserMatcher(
-					entities.Users{
+					entities.User{
 						Fullname:    "fullname",
 						PhoneNumber: "081236548974",
 						UserType:    constant.UserTypeRegular,
@@ -116,10 +112,9 @@ func Test_usecase_CreateUser(t *testing.T) {
 				)).
 			Return(int64(0), sql.ErrNoRows)
 
-		userID, httpCode, err := uc.Create(ctx, newUser)
+		userID, err := uc.Create(ctx, newUser)
 		require.Error(t, err)
 		require.EqualError(t, sql.ErrNoRows, err.Error())
-		require.Equal(t, httpCode, http.StatusInternalServerError)
 		require.Equal(t, userID, int64(0))
 	})
 }
@@ -136,15 +131,16 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	)
 
 	args := dtos.UpdateUserStatusRequest{
-		UserID:   1,
-		Status:   constant.UserActive,
-		UpdateBy: "martin@test.com",
+		UserID: 1,
+		UpdateUserStatus: dtos.UpdateUserStatus{
+			Status: constant.UserActive,
+		},
 	}
 
 	t.Run("positive_case_UpdateUserStatus", func(t *testing.T) {
 		repo.EXPECT().
 			GetUserByID(ctx, args.UserID, gomock.Any()).
-			Return(entities.Users{UserID: 1, IsActive: true}, nil)
+			Return(entities.User{UserID: 1, IsActive: true}, nil)
 
 		repo.EXPECT().
 			UpdateUserStatusByID(ctx, gomock.Any()).
@@ -157,7 +153,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	t.Run("negative_case_UpdateUserStatus_GetUserByID_err", func(t *testing.T) {
 		repo.EXPECT().
 			GetUserByID(ctx, args.UserID, gomock.Any()).
-			Return(entities.Users{}, errors.New("something errors"))
+			Return(entities.User{}, errors.New("something errors"))
 
 		err := uc.UpdateStatus(ctx, args)
 		require.Error(t, err)
@@ -166,7 +162,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	t.Run("negative_case_UpdateUserStatus_err", func(t *testing.T) {
 		repo.EXPECT().
 			GetUserByID(ctx, args.UserID, gomock.Any()).
-			Return(entities.Users{UserID: 1, IsActive: true}, nil)
+			Return(entities.User{UserID: 1, IsActive: true}, nil)
 
 		repo.EXPECT().
 			UpdateUserStatusByID(ctx, gomock.Any()).
@@ -188,7 +184,7 @@ func Test_usecase_Detail(t *testing.T) {
 
 	var id int64 = 1
 
-	returnedDetail := entities.Users{
+	returnedDetail := entities.User{
 		UserID:      id,
 		Email:       "test@test.com",
 		Fullname:    "test",
@@ -196,24 +192,21 @@ func Test_usecase_Detail(t *testing.T) {
 		UserType:    constant.UserTypePremium,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
-		CreatedBy:   "SYSTEM",
 	}
 
 	t.Run("detail_positive", func(t *testing.T) {
 		repo.EXPECT().GetUserByID(ctx, id).Return(returnedDetail, nil)
 
-		detail, httpCode, err := uc.Detail(ctx, id)
+		detail, err := uc.Detail(ctx, id)
 		require.NoError(t, err)
-		require.Equal(t, httpCode, http.StatusOK)
 		require.Equal(t, detail, entities.NewUserDetail(returnedDetail))
 	})
 
 	t.Run("detail_negative_failed_query_detail", func(t *testing.T) {
-		repo.EXPECT().GetUserByID(ctx, id).Return(entities.Users{}, sql.ErrNoRows)
+		repo.EXPECT().GetUserByID(ctx, id).Return(entities.User{}, sql.ErrNoRows)
 
-		detail, httpCode, err := uc.Detail(ctx, id)
+		detail, err := uc.Detail(ctx, id)
 		require.EqualError(t, err, sql.ErrNoRows.Error())
-		require.Equal(t, httpCode, http.StatusInternalServerError)
 		require.Equal(t, detail, dtos.UserDetailResponse{})
 	})
 
@@ -228,11 +221,7 @@ func Test_usecase_Login(t *testing.T) {
 		email    = "martin@test.com"
 
 		config = config.Config{
-			Authentication: config.AuthenticationConfig{
-				Key:       "DoWithLogic!@#",
-				SecretKey: "s3cr#tK3y!@#v001",
-				SaltKey:   "s4ltK3y!@#ddv001",
-			},
+			Authentication: config.AuthenticationConfig{Key: "DoWithLogic!@#"},
 		}
 	)
 
@@ -240,18 +229,17 @@ func Test_usecase_Login(t *testing.T) {
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(repo, config)
 
-	returnedUser := entities.Users{
+	returnedUser := entities.User{
 		UserID:   1,
 		Email:    email,
-		Password: utils.Encrypt(password, config),
+		Password: app_crypto.NewCrypto(config.Authentication.Key).EncodeSHA256(password),
 	}
 
 	t.Run("login_positive", func(t *testing.T) {
 		repo.EXPECT().GetUserByEmail(ctx, email).Return(returnedUser, nil)
 
-		authData, code, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
+		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
 		require.NoError(t, err)
-		require.Equal(t, code, http.StatusOK)
 		require.NotNil(t, authData)
 
 	})
@@ -259,19 +247,17 @@ func Test_usecase_Login(t *testing.T) {
 	t.Run("login_negative_invalid_password", func(t *testing.T) {
 		repo.EXPECT().GetUserByEmail(ctx, email).Return(returnedUser, nil)
 
-		authData, code, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: "testingpwd"})
+		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: "testingpwd"})
 		require.EqualError(t, apperror.ErrInvalidPassword, err.Error())
-		require.Equal(t, code, http.StatusUnauthorized)
 		require.Equal(t, authData, dtos.UserLoginResponse{})
 
 	})
 
 	t.Run("login_negative_failed_query_email", func(t *testing.T) {
-		repo.EXPECT().GetUserByEmail(ctx, email).Return(entities.Users{}, sql.ErrNoRows)
+		repo.EXPECT().GetUserByEmail(ctx, email).Return(entities.User{}, sql.ErrNoRows)
 
-		authData, code, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
+		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
 		require.EqualError(t, err, sql.ErrNoRows.Error())
-		require.Equal(t, code, http.StatusInternalServerError)
 		require.Equal(t, authData, dtos.UserLoginResponse{})
 
 	})
@@ -284,15 +270,16 @@ func Test_usecase_PartialUpdate(t *testing.T) {
 
 	var (
 		request = dtos.UpdateUserRequest{
-			Fullname: "update name",
-			UserID:   1,
+			UpdateUser: dtos.UpdateUser{
+				Fullname:    faker.Name(),
+				PhoneNumber: faker.Phonenumber(),
+			},
+			UserID: 1,
 		}
 
 		config = config.Config{
 			Authentication: config.AuthenticationConfig{
-				Key:       "DoWithLogic!@#",
-				SecretKey: "s3cr#tK3y!@#v001",
-				SaltKey:   "s4ltK3y!@#ddv001",
+				Key: "DoWithLogic!@#",
 			},
 		}
 	)

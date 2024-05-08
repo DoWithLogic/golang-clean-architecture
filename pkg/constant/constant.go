@@ -7,11 +7,16 @@ const (
 )
 
 const (
-	UserInactive = "0"
-	UserActive   = "1"
+	UserInactive = "inactive"
+	UserActive   = "active"
 )
 
 var MapStatus = map[string]bool{
 	UserInactive: false,
 	UserActive:   true,
 }
+
+const (
+	AuthorizationHeaderKey = "Authorization"
+	AuthCredentialKey      = "authCredential"
+)

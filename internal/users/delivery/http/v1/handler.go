@@ -1,14 +1,12 @@
 package v1
 
 import (
-	"context"
-	"net/http"
-	"time"
-
+	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils/response"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,120 +19,120 @@ func NewHandlers(uc users.Usecase) *handlers {
 }
 
 func (h *handlers) Login(c echo.Context) error {
-	var (
-		request dtos.UserLoginRequest
-	)
+	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "LoginHandler")
+	defer span.End()
 
+	var request dtos.UserLoginRequest
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
 	if err := request.Validate(); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	authData, httpCode, err := h.uc.Login(c.Request().Context(), request)
+	authData, err := h.uc.Login(ctx, request)
 	if err != nil {
-		return c.JSON(httpCode, response.NewResponseError(httpCode, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(err).Send(c)
 	}
 
-	return c.JSON(httpCode, response.NewResponse(httpCode, response.MsgSuccess, authData))
+	return response.SuccessBuilder(authData).Send(c)
 }
 
 func (h *handlers) CreateUser(c echo.Context) error {
-	var (
-		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		payload     dtos.CreateUserRequest
-	)
-	defer cancel()
+	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "CreateUserHandler")
+	defer span.End()
 
+	var payload dtos.CreateUserRequest
 	if err := c.Bind(&payload); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(
-			http.StatusBadRequest,
-			response.MsgFailed,
-			err.Error()),
-		)
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
 	if err := payload.Validate(); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(
-			http.StatusBadRequest,
-			response.MsgFailed,
-			err.Error()),
-		)
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	userID, httpCode, err := h.uc.Create(ctx, payload)
+	userID, err := h.uc.Create(ctx, payload)
 	if err != nil {
-		return c.JSON(httpCode, response.NewResponseError(
-			httpCode,
-			response.MsgFailed,
-			err.Error()),
-		)
+		return response.ErrorBuilder(err).Send(c)
 	}
 
-	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, map[string]int64{"id": userID}))
+	return response.SuccessBuilder(map[string]int64{"id": userID}).Send(c)
 }
 
 func (h *handlers) UserDetail(c echo.Context) error {
-	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-	defer cancel()
+	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "UserDetailHandler")
+	defer span.End()
 
-	userID := c.Get("identity").(*middleware.CustomClaims).UserID
-
-	data, code, err := h.uc.Detail(ctx, userID)
+	userData, err := middleware.NewTokenInformation(c)
 	if err != nil {
-		return c.JSON(code, response.NewResponseError(code, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(err).Send(c)
 	}
 
-	return c.JSON(code, response.NewResponse(code, response.MsgSuccess, data))
+	data, err := h.uc.Detail(ctx, userData.Data.UserID)
+	if err != nil {
+		return response.ErrorBuilder(err).Send(c)
+	}
+
+	return response.SuccessBuilder(data).Send(c)
 }
 
 func (h *handlers) UpdateUser(c echo.Context) error {
-	var (
-		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		identity    = c.Get("identity").(*middleware.CustomClaims)
-		request     dtos.UpdateUserRequest
-	)
-	defer cancel()
+	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "UpdateUserHandler")
+	defer span.End()
 
+	var request dtos.UpdateUser
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
-
-	request.UserID = identity.UserID
-	request.UpdateBy = identity.Email
 
 	if err := request.Validate(); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	if err := h.uc.PartialUpdate(ctx, request); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
+	userData, err := middleware.NewTokenInformation(c)
+	if err != nil {
+		return response.ErrorBuilder(err).Send(c)
 	}
 
-	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, nil))
+	args := dtos.UpdateUserRequest{
+		UserID:     userData.Data.UserID,
+		UpdateUser: request,
+	}
+
+	if err := h.uc.PartialUpdate(ctx, args); err != nil {
+		return response.ErrorBuilder(err).Send(c)
+	}
+
+	return response.SuccessBuilder(nil).Send(c)
 }
 
 func (h *handlers) UpdateUserStatus(c echo.Context) error {
-	var (
-		ctx, cancel = context.WithTimeout(c.Request().Context(), time.Duration(30*time.Second))
-		identity    = c.Get("identity").(*middleware.CustomClaims)
-		request     = dtos.UpdateUserStatusRequest{UserID: identity.UserID, UpdateBy: identity.Email}
-	)
-	defer cancel()
+	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "UpdateUserStatusHandler")
+	defer span.End()
 
+	var request dtos.UpdateUserStatus
 	if err := c.Bind(&request); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
 	if err := request.Validate(); err != nil {
-		return c.JSON(http.StatusBadRequest, response.NewResponseError(http.StatusBadRequest, response.MsgFailed, err.Error()))
+		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	if err := h.uc.UpdateStatus(ctx, request); err != nil {
-		return c.JSON(http.StatusInternalServerError, response.NewResponseError(http.StatusInternalServerError, response.MsgFailed, err.Error()))
+	userData, err := middleware.NewTokenInformation(c)
+	if err != nil {
+		return response.ErrorBuilder(err).Send(c)
 	}
 
-	return c.JSON(http.StatusOK, response.NewResponse(http.StatusOK, response.MsgSuccess, nil))
+	args := dtos.UpdateUserStatusRequest{
+		UserID:           userData.Data.UserID,
+		UpdateUserStatus: request,
+	}
+
+	if err := h.uc.UpdateStatus(ctx, args); err != nil {
+		return response.ErrorBuilder(err).Send(c)
+	}
+
+	return response.SuccessBuilder(nil).Send(c)
 }

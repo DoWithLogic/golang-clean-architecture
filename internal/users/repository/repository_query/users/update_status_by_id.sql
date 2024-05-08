@@ -1,5 +1,4 @@
 UPDATE users SET 
     is_active = ?,
-    updated_at = ?,
-    updated_by = ?
+    updated_at = ?
 WHERE id = ?

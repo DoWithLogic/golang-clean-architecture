@@ -17,14 +17,7 @@ services:
       interval: 0.5s
       timeout: 10s
       retries: 10
-  golang-clean-architecture:
-    build:
-      context: .
-      dockerfile: Dockerfile # Specify the path to your Dockerfile
-    ports:
-      - 8080:8080
-      - 9090:9090
-    volumes:
-      - ./config/config-local.yaml:/app/config/config-local.yaml
-    depends_on:
-      - mysql-db
+    entrypoint: 
+      sh -c "
+        echo 'CREATE DATABASE IF NOT EXISTS users;' > /docker-entrypoint-initdb.d/init.sql;
+        /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"

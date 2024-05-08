@@ -3,18 +3,17 @@ package usecase
 import (
 	"context"
 	"database/sql"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
+	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 )
 
 type (
@@ -28,48 +27,52 @@ func NewUseCase(repo users.Repository, cfg config.Config) users.Usecase {
 	return &usecase{repo, cfg}
 }
 
-func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (response dtos.UserLoginResponse, httpCode int, err error) {
+func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (response dtos.UserLoginResponse, err error) {
 	dataLogin, err := uc.repo.GetUserByEmail(ctx, request.Email)
 	if err != nil {
-		return response, http.StatusInternalServerError, err
+		return response, apperror.InternalServerError(err)
 	}
 
-	if !strings.EqualFold(utils.Decrypt(dataLogin.Password, uc.cfg), request.Password) {
-		return response, http.StatusUnauthorized, apperror.ErrInvalidPassword
+	if !strings.EqualFold(dataLogin.Password, app_crypto.NewCrypto(uc.cfg.Authentication.Key).EncodeSHA256(request.Password)) {
+		return response, apperror.Unauthorized(apperror.ErrInvalidPassword)
 	}
 
-	identityData := middleware.CustomClaims{
-		UserID: dataLogin.UserID,
-		Email:  dataLogin.Email,
+	claims := middleware.PayloadToken{
+		Data: &middleware.Data{
+			UserID: dataLogin.UserID,
+			Email:  dataLogin.Email,
+		},
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 15).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 60).Unix(),
 		},
 	}
 
-	token, err := middleware.GenerateJWT(identityData, uc.cfg.Authentication.Key)
+	// Calculate the expiration time in seconds
+	expiresIn := claims.ExpiresAt - time.Now().Unix()
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	tokenString, err := token.SignedString([]byte(uc.cfg.JWT.Key))
 	if err != nil {
-		return response, http.StatusInternalServerError, apperror.ErrFailedGenerateJWT
+		return response, apperror.InternalServerError(err)
 	}
 
-	response = dtos.UserLoginResponse{
-		AccessToken: token,
-		ExpiredAt:   utils.UnixToDuration(identityData.ExpiresAt),
-	}
-
-	return response, http.StatusOK, nil
+	return dtos.UserLoginResponse{AccessToken: tokenString, ExpiredAt: expiresIn}, nil
 }
 
-func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (userID int64, httpCode int, err error) {
+func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (userID int64, err error) {
 	if exist := uc.repo.IsUserExist(ctx, payload.Email); exist {
-		return userID, http.StatusConflict, apperror.ErrEmailAlreadyExist
+		return userID, apperror.Conflict(apperror.ErrEmailAlreadyExist)
 	}
 
 	userID, err = uc.repo.SaveNewUser(ctx, entities.NewCreateUser(payload, uc.cfg))
 	if err != nil {
-		return userID, http.StatusInternalServerError, err
+		return userID, apperror.InternalServerError(err)
 	}
 
-	return userID, http.StatusOK, nil
+	return userID, nil
 }
 
 func (uc *usecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserRequest) error {
@@ -77,38 +80,28 @@ func (uc *usecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserReques
 		opt := entities.LockingOpt{
 			PessimisticLocking: true,
 		}
-		_, err := tx.GetUserByID(ctx, data.UserID, opt)
-		if err != nil {
+
+		if _, err := tx.GetUserByID(ctx, data.UserID, opt); err != nil {
 			return err
 		}
 
-		err = tx.UpdateUserByID(ctx, entities.NewUpdateUsers(data))
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return tx.UpdateUserByID(ctx, entities.NewUpdateUser(data))
 	})
 }
 
 func (uc *usecase) UpdateStatus(ctx context.Context, req dtos.UpdateUserStatusRequest) error {
-	_, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{})
-	if err != nil {
+	if _, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{}); err != nil {
 		return err
 	}
 
-	if err := uc.repo.UpdateUserStatusByID(ctx, entities.NewUpdateUserStatus(req)); err != nil {
-		return err
-	}
-
-	return nil
+	return uc.repo.UpdateUserStatusByID(ctx, entities.NewUpdateUserStatus(req))
 }
 
-func (uc *usecase) Detail(ctx context.Context, id int64) (detail dtos.UserDetailResponse, httpCode int, err error) {
+func (uc *usecase) Detail(ctx context.Context, id int64) (detail dtos.UserDetailResponse, err error) {
 	userDetail, err := uc.repo.GetUserByID(ctx, id)
 	if err != nil {
-		return detail, http.StatusInternalServerError, err
+		return detail, apperror.InternalServerError(err)
 	}
 
-	return entities.NewUserDetail(userDetail), http.StatusOK, nil
+	return entities.NewUserDetail(userDetail), nil
 }

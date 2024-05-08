@@ -1,0 +1,26 @@
+App:
+  Name: "golang-clean-architecture"
+  Version: "v0.0.1"
+  Scheme: "http"
+  Host: "localhost:3002"
+  Environment: local #local,development,staging,production
+
+Server:
+  Port: "9090"
+  Debug: true
+  TimeZone: "Asia/Jakarta"
+
+
+Database: 
+  Host: 127.0.0.1
+  Port: 3306
+  Name: users
+  User: root
+  Password: pwd
+
+Authentication:
+  Key: DoWithLogic!@#
+
+Observability:
+  Enable: false
+  Mode: "otlp/http"

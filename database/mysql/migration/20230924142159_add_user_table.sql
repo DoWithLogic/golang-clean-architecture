@@ -9,9 +9,7 @@ CREATE TABLE `users` (
   `user_type` varchar(50) NOT NULL,
   `is_active` tinyint(1) NOT NULL,
   `created_at` timestamp NOT NULL,
-  `created_by` varchar(255) NOT NULL,
   `updated_at` timestamp DEFAULT NULL,
-  `updated_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
