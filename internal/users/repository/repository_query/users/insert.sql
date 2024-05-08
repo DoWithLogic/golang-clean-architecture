@@ -5,6 +5,5 @@ INSERT INTO users (
     phone_number,
     user_type,
     is_active,
-    created_at,
-    created_by
-)VALUE (?, ?, ?, ?, ?, ?, ?, ?)
+    created_at
+)VALUE (?, ?, ?, ?, ?, ?, ?)

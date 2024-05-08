@@ -39,7 +39,7 @@ func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(t
 	return nil
 }
 
-func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (userID int64, err error) {
+func (repo *repository) SaveNewUser(ctx context.Context, user entities.User) (userID int64, err error) {
 	args := utils.Array{
 		user.Email,
 		user.Password,
@@ -48,7 +48,6 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (u
 		user.UserType,
 		user.IsActive,
 		user.CreatedAt,
-		user.CreatedBy,
 	}
 
 	err = new(datasource.DataSource).ExecSQL(repo.conn.ExecContext(ctx, repository_query.InsertUsers, args...)).Scan(nil, &userID)
@@ -59,14 +58,12 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.Users) (u
 	return userID, nil
 }
 
-func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUsers) error {
+func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUser) error {
 	args := utils.Array{
-		user.Email, user.Email,
 		user.Fullname, user.Fullname,
 		user.PhoneNumber, user.PhoneNumber,
 		user.UserType, user.UserType,
 		user.UpdatedAt,
-		user.UpdatedBy,
 		user.UserID,
 	}
 
@@ -78,7 +75,7 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 	return nil
 }
 
-func (repo *repository) GetUserByID(ctx context.Context, userID int64, options ...entities.LockingOpt) (userData entities.Users, err error) {
+func (repo *repository) GetUserByID(ctx context.Context, userID int64, options ...entities.LockingOpt) (userData entities.User, err error) {
 	args := utils.Array{
 		userID,
 	}
@@ -92,7 +89,6 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, options .
 			&userData.UserType,
 			&userData.IsActive,
 			&userData.CreatedAt,
-			&userData.CreatedBy,
 		}
 	}
 
@@ -113,7 +109,6 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.U
 	args := utils.Array{
 		req.IsActive,
 		req.UpdatedAt,
-		req.UpdatedBy,
 		req.UserID,
 	}
 
@@ -144,23 +139,28 @@ func (repo *repository) IsUserExist(ctx context.Context, email string) bool {
 	return id != 0
 }
 
-func (repo *repository) GetUserByEmail(ctx context.Context, email string) (userDetail entities.Users, err error) {
+func (repo *repository) GetUserByEmail(ctx context.Context, email string) (userData entities.User, err error) {
 	args := utils.Array{
 		email,
 	}
 
 	row := func(idx int) utils.Array {
 		return utils.Array{
-			&userDetail.UserID,
-			&userDetail.Email,
-			&userDetail.Password,
+			&userData.UserID,
+			&userData.Email,
+			&userData.Password,
+			&userData.Fullname,
+			&userData.PhoneNumber,
+			&userData.UserType,
+			&userData.IsActive,
+			&userData.CreatedAt,
 		}
 	}
 
 	err = new(datasource.DataSource).QuerySQL(repo.conn.QueryxContext(ctx, repository_query.GetUserByEmail, args...)).Scan(row)
 	if err != nil {
-		return entities.Users{}, err
+		return entities.User{}, err
 	}
 
-	return userDetail, err
+	return userData, err
 }

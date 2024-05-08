@@ -3,77 +3,58 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
-
-	"github.com/DoWithLogic/golang-clean-architecture/config"
+	"io"
 )
 
-func Encrypt(pwd string, cfg config.Config) string {
-	return encrypt(pwd, []byte(cfg.Authentication.SecretKey), []byte(cfg.Authentication.SaltKey))
-}
-
-func Decrypt(pwd string, cfg config.Config) string {
-	return decrypt(pwd, []byte(cfg.Authentication.SecretKey), []byte(cfg.Authentication.SaltKey))
-}
-
-func encrypt(text string, key, salt []byte) string {
+func Encrypt(text, secretKey, salt string) string {
 	plaintext := []byte(text)
+	key := []byte(secretKey)
+	saltBytes := []byte(salt)
 
-	// Create a new AES cipher block
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
-	// Create a GCM (Galois/Counter Mode) cipher using AES
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		panic(err.Error())
+	cipherText := make([]byte, aes.BlockSize+len(plaintext))
+
+	// Use the salt in the initialization vector
+	iv := cipherText[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
 	}
 
-	// Create a nonce by concatenating salt and random bytes. Nonce must be unique for each encryption
-	nonce := make([]byte, gcm.NonceSize())
-	copy(nonce, salt)
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(cipherText[aes.BlockSize:], plaintext)
 
-	// Encrypt the data using AES-GCM
-	ciphertext := gcm.Seal(nil, nonce, plaintext, nil)
-
-	// Include the nonce in the encrypted data
-	encryptedData := append(nonce, ciphertext...)
-
-	return base64.StdEncoding.EncodeToString(encryptedData)
+	return base64.StdEncoding.EncodeToString(append(saltBytes, cipherText...))
 }
 
-func decrypt(encryptedText string, key, salt []byte) string {
-	// Decode base64
-	encryptedData, err := base64.StdEncoding.DecodeString(encryptedText)
+func Decrypt(encryptedText, secretKey, salt string) string {
+	ciphertext, err := base64.StdEncoding.DecodeString(encryptedText)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
-	// Create a new AES cipher block
+	key := []byte(secretKey)
+	saltBytes := []byte(salt)
+
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
-	// Create a GCM (Galois/Counter Mode) cipher using AES
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		panic(err.Error())
+	if len(ciphertext) < aes.BlockSize {
+		panic("ciphertext too short")
 	}
 
-	// Nonce size is determined by the choice of GCM mode and its associated size for the given key
-	nonceSize := gcm.NonceSize()
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
 
-	// Extract the nonce from the encrypted data
-	nonce, encryptedMessage := encryptedData[:nonceSize], encryptedData[nonceSize:]
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(ciphertext, ciphertext)
 
-	// Decrypt the data using AES-GCM
-	plaintext, err := gcm.Open(nil, nonce, encryptedMessage, nil)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return string(plaintext)
+	return string(ciphertext[len(saltBytes):])
 }

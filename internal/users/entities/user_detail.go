@@ -2,7 +2,7 @@ package entities
 
 import "github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 
-func NewUserDetail(data Users) dtos.UserDetailResponse {
+func NewUserDetail(data User) dtos.UserDetailResponse {
 	return dtos.UserDetailResponse{
 		UserID:      data.UserID,
 		Email:       data.Email,
@@ -11,6 +11,5 @@ func NewUserDetail(data Users) dtos.UserDetailResponse {
 		UserType:    data.UserType,
 		IsActive:    data.IsActive,
 		CreatedAt:   data.CreatedAt,
-		CreatedBy:   data.CreatedBy,
 	}
 }

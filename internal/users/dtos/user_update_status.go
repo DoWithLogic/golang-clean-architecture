@@ -1,24 +1,21 @@
 package dtos
 
 import (
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 	"github.com/invopop/validation"
 )
 
-type UpdateUserStatusRequest struct {
-	UserID   int64  `json:"-"`
-	Status   string `json:"status"`
-	UpdateBy string `json:"-"`
+type UpdateUserStatus struct {
+	Status string `json:"status"`
 }
 
-func (ussp UpdateUserStatusRequest) Validate() error {
-	if ussp.Status != constant.UserInactive && ussp.Status != constant.UserActive {
-		return apperror.ErrStatusValue
-	}
+type UpdateUserStatusRequest struct {
+	UserID int64
+	UpdateUserStatus
+}
 
+func (ussp UpdateUserStatus) Validate() error {
 	return validation.ValidateStruct(&ussp,
-		validation.Field(&ussp.UserID, validation.NotNil),
-		validation.Field(&ussp.UpdateBy, validation.NotNil),
+		validation.Field(&ussp.Status, validation.In(constant.UserActive, constant.UserInactive)),
 	)
 }

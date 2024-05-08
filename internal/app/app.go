@@ -11,39 +11,31 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
+	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+
+	"github.com/samber/lo"
 )
 
 type App struct {
-	db   *sqlx.DB
-	echo *echo.Echo
-	log  *zerolog.Logger
-	cfg  config.Config
+	db   *sqlx.DB      // Database connection.
+	echo *echo.Echo    // Echo HTTP server instance.
+	cfg  config.Config // Configuration settings for the application.
 }
 
 func NewApp(ctx context.Context, cfg config.Config) *App {
-	db, err := datasource.NewDatabase(cfg.Database)
-	if err != nil {
-		panic(err)
-	}
-
 	return &App{
-		db:   db,
-		echo: echo.New(),
-		log:  zerolog.NewZeroLog(ctx, os.Stdout),
+		db:   lo.Must(datasource.NewDatabase(cfg.Database)),
+		echo: middleware.NewEchoServer(cfg),
 		cfg:  cfg,
 	}
 }
 
 func (app *App) Run() error {
 	if err := app.startService(); err != nil {
-		app.log.Z().Err(err).Msg("[app]StartService")
-
 		return err
 	}
 
@@ -57,15 +49,14 @@ func (app *App) Run() error {
 		<-quit
 		log.Info("Server is shutting down...")
 
+		// Create a context with a timeout of 10 seconds for the server shutdown.
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		app.db.Close()
+
+		// Shutdown gracefully.
+		app.db.DB.Close()
 		app.echo.Shutdown(ctx)
 	}()
 
-	app.echo.Debug = app.cfg.Server.Debug
-	app.echo.Use(middleware.AppCors())
-	app.echo.Use(middleware.CacheWithRevalidation)
-
-	return app.echo.Start(fmt.Sprintf(":%s", app.cfg.Server.RESTPort))
+	return app.echo.Start(fmt.Sprintf(":%s", app.cfg.Server.Port))
 }

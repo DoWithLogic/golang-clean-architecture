@@ -5,12 +5,12 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 )
 
 type (
-	Users struct {
+	User struct {
 		UserID      int64
 		Email       string
 		Password    string
@@ -19,9 +19,7 @@ type (
 		UserType    string
 		IsActive    bool
 		CreatedAt   time.Time
-		CreatedBy   string
 		UpdatedAt   time.Time
-		UpdatedBy   string
 	}
 
 	LockingOpt struct {
@@ -29,15 +27,14 @@ type (
 	}
 )
 
-func NewCreateUser(data dtos.CreateUserRequest, cfg config.Config) Users {
-	return Users{
+func NewCreateUser(data dtos.CreateUserRequest, cfg config.Config) User {
+	return User{
 		Fullname:    data.FullName,
 		Email:       data.Email,
-		Password:    utils.Encrypt(data.Password, cfg),
+		Password:    app_crypto.NewCrypto(cfg.Authentication.Key).EncodeSHA256(data.Password),
 		PhoneNumber: data.PhoneNumber,
 		UserType:    constant.UserTypeRegular,
 		IsActive:    true,
 		CreatedAt:   time.Now(),
-		CreatedBy:   "SYSTEM",
 	}
 }

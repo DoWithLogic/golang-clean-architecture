@@ -8,9 +8,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/otel/zerolog"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog"
 )
 
 type (
@@ -53,7 +53,7 @@ var (
 	_   Conn   = (*sqlx.Conn)(nil)
 	_   Conn   = (*sqlx.DB)(nil)
 	_   ConnTx = (*sqlx.Tx)(nil)
-	log        = zerolog.NewZeroLog(context.Background(), os.Stdout)
+	log        = zerolog.New(os.Stdout)
 )
 
 // datasource errors
@@ -66,13 +66,13 @@ var (
 
 func (x exec) Scan(rowsAffected, lastInsertID *int64) error {
 	if x.err != nil {
-		log.Z().Err(x.err).Msg("[database:exec]error not nil")
+		log.Err(x.err).Msg("[database:exec]error not nil")
 
 		return x.err
 	}
 
 	if x.sqlResult == nil {
-		log.Z().Err(sql.ErrNoRows).Msg("[database:exec]rows is nil")
+		log.Err(sql.ErrNoRows).Msg("[database:exec]rows is nil")
 
 		return ErrDataNotFound
 	}
@@ -80,12 +80,12 @@ func (x exec) Scan(rowsAffected, lastInsertID *int64) error {
 	if rowsAffected != nil {
 		n, err := x.sqlResult.RowsAffected()
 		if err != nil {
-			log.Z().Err(err).Msg("[database:exec]scan rows affected error")
+			log.Err(err).Msg("[database:exec]scan rows affected error")
 
 			return err
 		}
 		if n < 1 {
-			log.Z().Err(ErrDataNotFound).Msg("[database:exec]rows affected")
+			log.Err(ErrDataNotFound).Msg("[database:exec]rows affected")
 
 			return ErrDataNotFound
 		}
@@ -95,7 +95,7 @@ func (x exec) Scan(rowsAffected, lastInsertID *int64) error {
 	if lastInsertID != nil {
 		n, err := x.sqlResult.LastInsertId()
 		if err != nil {
-			log.Z().Err(err).Msg("[database:exec]last inserted id error")
+			log.Err(err).Msg("[database:exec]last inserted id error")
 		} else {
 			*lastInsertID = int64(n)
 		}
@@ -106,13 +106,13 @@ func (x exec) Scan(rowsAffected, lastInsertID *int64) error {
 
 func (x query) Scan(row func(i int) utils.Array) error {
 	if x.err != nil {
-		log.Z().Err(x.err).Msg("[database:query]error not nil")
+		log.Err(x.err).Msg("[database:query]error not nil")
 
 		return x.err
 	}
 
 	if x.sqlRows == nil {
-		log.Z().Err(sql.ErrNoRows).Msg("[database:query]rows is nil")
+		log.Err(sql.ErrNoRows).Msg("[database:query]rows is nil")
 
 		return ErrDataNotFound
 	}
@@ -125,13 +125,13 @@ func (x query) Scan(row func(i int) utils.Array) error {
 
 	columns, err := x.sqlRows.Columns()
 	if err != nil {
-		log.Z().Err(err).Msg("[database:query]columns")
+		log.Err(err).Msg("[database:query]columns")
 
 		return err
 	}
 
 	if len(columns) < 1 {
-		log.Z().Err(ErrNoColumnReturned).Msg("[database:query]count columns length")
+		log.Err(ErrNoColumnReturned).Msg("[database:query]count columns length")
 
 		return ErrNoColumnReturned
 	}
@@ -139,7 +139,7 @@ func (x query) Scan(row func(i int) utils.Array) error {
 	var idx int = 0
 	for x.sqlRows.Next() {
 		if x.sqlRows.Err() != nil {
-			log.Z().Err(x.sqlRows.Err()).Msg("[database:query]error to scan sql rows")
+			log.Err(x.sqlRows.Err()).Msg("[database:query]error to scan sql rows")
 
 			return x.sqlRows.Err()
 		}
@@ -154,13 +154,13 @@ func (x query) Scan(row func(i int) utils.Array) error {
 
 		if len(row(idx)) != len(columns) {
 			err := fmt.Errorf("%w: [%d] columns on [%d] destinations", ErrInvalidArguments, len(columns), len(row(idx)))
-			log.Z().Err(err).Msg("[database:query]error invalid args to scan")
+			log.Err(err).Msg("[database:query]error invalid args to scan")
 
 			return err
 		}
 
 		if err = x.sqlRows.Scan(row(idx)...); err != nil {
-			log.Z().Err(err).Msg("[database:query] failed to scan row")
+			log.Err(err).Msg("[database:query] failed to scan row")
 
 			return err
 		}
@@ -181,7 +181,7 @@ func (DataSource) QuerySQL(sqlRows *sqlx.Rows, err error) Query {
 
 func (DataSource) EndTx(tx *sqlx.Tx, err error) error {
 	if tx == nil {
-		log.Z().Err(ErrInvalidTransaction).Msg("[database:EndTx]")
+		log.Err(ErrInvalidTransaction).Msg("[database:EndTx]")
 
 		return ErrInvalidTransaction
 	}
@@ -192,14 +192,14 @@ func (DataSource) EndTx(tx *sqlx.Tx, err error) error {
 			msg = fmt.Sprintf("%s failed: (%s)", msg, errR.Error())
 		}
 
-		log.Z().Err(err).Msg(fmt.Sprintf("[database:EndTx]%s", msg))
+		log.Err(err).Msg(fmt.Sprintf("[database:EndTx]%s", msg))
 
 		return err
 	}
 
 	// we try to commit here
 	if err = tx.Commit(); err != nil {
-		log.Z().Err(err).Msg("[database:EndTx]Commit")
+		log.Err(err).Msg("[database:EndTx]Commit")
 
 		return err
 	}
