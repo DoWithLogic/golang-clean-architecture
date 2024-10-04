@@ -8,6 +8,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/repository/repository_query"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasource"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/utils"
 	"github.com/jmoiron/sqlx"
 )
@@ -40,6 +41,9 @@ func (r *repository) Atomic(ctx context.Context, opt *sql.TxOptions, repo func(t
 }
 
 func (repo *repository) SaveNewUser(ctx context.Context, user entities.User) (userID int64, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "SaveNewUserRepo")
+	defer span.End()
+
 	args := utils.Array{
 		user.Email,
 		user.Password,
@@ -59,6 +63,9 @@ func (repo *repository) SaveNewUser(ctx context.Context, user entities.User) (us
 }
 
 func (repo *repository) UpdateUserByID(ctx context.Context, user entities.UpdateUser) error {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "UpdateUserByIDRepo")
+	defer span.End()
+
 	args := utils.Array{
 		user.Fullname, user.Fullname,
 		user.PhoneNumber, user.PhoneNumber,
@@ -76,6 +83,9 @@ func (repo *repository) UpdateUserByID(ctx context.Context, user entities.Update
 }
 
 func (repo *repository) GetUserByID(ctx context.Context, userID int64, options ...entities.LockingOpt) (userData entities.User, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "GetUserByIDRepo")
+	defer span.End()
+
 	args := utils.Array{
 		userID,
 	}
@@ -106,6 +116,9 @@ func (repo *repository) GetUserByID(ctx context.Context, userID int64, options .
 }
 
 func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.UpdateUserStatus) error {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "UpdateUserStatusByIDRepo")
+	defer span.End()
+
 	args := utils.Array{
 		req.IsActive,
 		req.UpdatedAt,
@@ -122,6 +135,9 @@ func (repo *repository) UpdateUserStatusByID(ctx context.Context, req entities.U
 }
 
 func (repo *repository) IsUserExist(ctx context.Context, email string) bool {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "IsUserExistRepo")
+	defer span.End()
+
 	args := utils.Array{email}
 
 	var id int64
@@ -140,6 +156,9 @@ func (repo *repository) IsUserExist(ctx context.Context, email string) bool {
 }
 
 func (repo *repository) GetUserByEmail(ctx context.Context, email string) (userData entities.User, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "GetUserByEmailRepo")
+	defer span.End()
+
 	args := utils.Array{
 		email,
 	}
