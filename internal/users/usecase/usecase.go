@@ -6,25 +6,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/golang-jwt/jwt"
 )
 
 type (
 	usecase struct {
-		repo users.Repository
-		cfg  config.Config
+		repo   users.Repository
+		appJwt *app_jwt.JWT
+		crypto *app_crypto.Crypto
 	}
 )
 
-func NewUseCase(repo users.Repository, cfg config.Config) users.Usecase {
-	return &usecase{repo, cfg}
+func NewUseCase(repo users.Repository, appJwt *app_jwt.JWT, crypto *app_crypto.Crypto) users.Usecase {
+	return &usecase{repo, appJwt, crypto}
 }
 
 func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (response dtos.UserLoginResponse, err error) {
@@ -33,7 +34,7 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 		return response, apperror.InternalServerError(err)
 	}
 
-	if !strings.EqualFold(dataLogin.Password, app_crypto.NewCrypto(uc.cfg.Authentication.Key).EncodeSHA256(request.Password)) {
+	if !strings.EqualFold(dataLogin.Password, uc.crypto.EncodeSHA256(request.Password)) {
 		return response, apperror.Unauthorized(apperror.ErrInvalidPassword)
 	}
 
@@ -47,19 +48,13 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 		},
 	}
 
-	// Calculate the expiration time in seconds
-	expiresIn := claims.ExpiresAt - time.Now().Unix()
-
-	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	// Generate encoded token and send it as response.
-	tokenString, err := token.SignedString([]byte(uc.cfg.JWT.Key))
+	jwtToken, err := uc.appJwt.GenerateToken(ctx, claims)
 	if err != nil {
 		return response, apperror.InternalServerError(err)
 	}
 
-	return dtos.UserLoginResponse{AccessToken: tokenString, ExpiredAt: expiresIn}, nil
+	return dtos.UserLoginResponse{AccessToken: jwtToken, ExpiredAt: claims.ExpiresAt - time.Now().Unix()}, nil
 }
 
 func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (userID int64, err error) {
@@ -67,7 +62,8 @@ func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (
 		return userID, apperror.Conflict(apperror.ErrEmailAlreadyExist)
 	}
 
-	userID, err = uc.repo.SaveNewUser(ctx, entities.NewCreateUser(payload, uc.cfg))
+	payload.Password = uc.crypto.EncodeSHA256(payload.Password)
+	userID, err = uc.repo.SaveNewUser(ctx, entities.NewCreateUser(payload))
 	if err != nil {
 		return userID, apperror.InternalServerError(err)
 	}

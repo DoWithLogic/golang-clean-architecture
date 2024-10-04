@@ -21,6 +21,11 @@ Database:
 Authentication:
   Key: DoWithLogic!@#
 
+JWT:
+  Key: DoWithLogic!@#
+  Expired: 60
+  Label: XXXXX
+
 Observability:
   Enable: false
   Mode: "otlp/http"
