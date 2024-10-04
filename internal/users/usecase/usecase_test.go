@@ -58,7 +58,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
 	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
-	ctx := context.Background()
+	ctx := context.TODO()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
@@ -74,10 +74,10 @@ func Test_usecase_CreateUser(t *testing.T) {
 	}
 
 	t.Run("positive_case_create_user", func(t *testing.T) {
-		repo.EXPECT().IsUserExist(ctx, newUser.Email).Return(false)
+		repo.EXPECT().IsUserExist(gomock.Any(), newUser.Email).Return(false)
 
 		repo.EXPECT().
-			SaveNewUser(ctx,
+			SaveNewUser(gomock.Any(),
 				createUserMatcher(
 					entities.User{
 						Fullname:    newUser.FullName,
@@ -94,7 +94,7 @@ func Test_usecase_CreateUser(t *testing.T) {
 	})
 
 	t.Run("negative_email_already_use", func(t *testing.T) {
-		repo.EXPECT().IsUserExist(ctx, newUser.Email).Return(true)
+		repo.EXPECT().IsUserExist(gomock.Any(), newUser.Email).Return(true)
 
 		userID, err := uc.Create(ctx, newUser)
 		require.EqualError(t, apperror.ErrEmailAlreadyExist, err.Error())
@@ -102,10 +102,10 @@ func Test_usecase_CreateUser(t *testing.T) {
 	})
 
 	t.Run("negative_case_create_user_error_repo", func(t *testing.T) {
-		repo.EXPECT().IsUserExist(ctx, newUser.Email).Return(false)
+		repo.EXPECT().IsUserExist(gomock.Any(), newUser.Email).Return(false)
 
 		repo.EXPECT().
-			SaveNewUser(ctx,
+			SaveNewUser(gomock.Any(),
 				createUserMatcher(
 					entities.User{
 						Fullname:    "fullname",
@@ -146,11 +146,11 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 
 	t.Run("positive_case_UpdateUserStatus", func(t *testing.T) {
 		repo.EXPECT().
-			GetUserByID(ctx, args.UserID, gomock.Any()).
+			GetUserByID(gomock.Any(), args.UserID, gomock.Any()).
 			Return(entities.User{UserID: 1, IsActive: true}, nil)
 
 		repo.EXPECT().
-			UpdateUserStatusByID(ctx, gomock.Any()).
+			UpdateUserStatusByID(gomock.Any(), gomock.Any()).
 			Return(nil)
 
 		err := uc.UpdateStatus(ctx, args)
@@ -159,7 +159,7 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 
 	t.Run("negative_case_UpdateUserStatus_GetUserByID_err", func(t *testing.T) {
 		repo.EXPECT().
-			GetUserByID(ctx, args.UserID, gomock.Any()).
+			GetUserByID(gomock.Any(), args.UserID, gomock.Any()).
 			Return(entities.User{}, errors.New("something errors"))
 
 		err := uc.UpdateStatus(ctx, args)
@@ -168,11 +168,11 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 
 	t.Run("negative_case_UpdateUserStatus_err", func(t *testing.T) {
 		repo.EXPECT().
-			GetUserByID(ctx, args.UserID, gomock.Any()).
+			GetUserByID(gomock.Any(), args.UserID, gomock.Any()).
 			Return(entities.User{UserID: 1, IsActive: true}, nil)
 
 		repo.EXPECT().
-			UpdateUserStatusByID(ctx, gomock.Any()).
+			UpdateUserStatusByID(gomock.Any(), gomock.Any()).
 			Return(errors.New("there was error"))
 
 		err := uc.UpdateStatus(ctx, args)
@@ -208,7 +208,7 @@ func Test_usecase_Detail(t *testing.T) {
 	}
 
 	t.Run("detail_positive", func(t *testing.T) {
-		repo.EXPECT().GetUserByID(ctx, id).Return(returnedDetail, nil)
+		repo.EXPECT().GetUserByID(gomock.Any(), id).Return(returnedDetail, nil)
 
 		detail, err := uc.Detail(ctx, id)
 		require.NoError(t, err)
@@ -216,7 +216,7 @@ func Test_usecase_Detail(t *testing.T) {
 	})
 
 	t.Run("detail_negative_failed_query_detail", func(t *testing.T) {
-		repo.EXPECT().GetUserByID(ctx, id).Return(entities.User{}, sql.ErrNoRows)
+		repo.EXPECT().GetUserByID(gomock.Any(), id).Return(entities.User{}, sql.ErrNoRows)
 
 		detail, err := uc.Detail(ctx, id)
 		require.EqualError(t, err, sql.ErrNoRows.Error())
@@ -251,7 +251,7 @@ func Test_usecase_Login(t *testing.T) {
 	}
 
 	t.Run("login_positive", func(t *testing.T) {
-		repo.EXPECT().GetUserByEmail(ctx, email).Return(returnedUser, nil)
+		repo.EXPECT().GetUserByEmail(gomock.Any(), email).Return(returnedUser, nil)
 
 		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
 		require.NoError(t, err)
@@ -260,7 +260,7 @@ func Test_usecase_Login(t *testing.T) {
 	})
 
 	t.Run("login_negative_invalid_password", func(t *testing.T) {
-		repo.EXPECT().GetUserByEmail(ctx, email).Return(returnedUser, nil)
+		repo.EXPECT().GetUserByEmail(gomock.Any(), email).Return(returnedUser, nil)
 
 		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: "testingpwd"})
 		require.EqualError(t, apperror.ErrInvalidPassword, err.Error())
@@ -269,7 +269,7 @@ func Test_usecase_Login(t *testing.T) {
 	})
 
 	t.Run("login_negative_failed_query_email", func(t *testing.T) {
-		repo.EXPECT().GetUserByEmail(ctx, email).Return(entities.User{}, sql.ErrNoRows)
+		repo.EXPECT().GetUserByEmail(gomock.Any(), email).Return(entities.User{}, sql.ErrNoRows)
 
 		authData, err := uc.Login(ctx, dtos.UserLoginRequest{Email: email, Password: password})
 		require.EqualError(t, err, sql.ErrNoRows.Error())

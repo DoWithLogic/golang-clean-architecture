@@ -13,6 +13,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -29,6 +30,9 @@ func NewUseCase(repo users.Repository, appJwt *app_jwt.JWT, crypto *app_crypto.C
 }
 
 func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (response dtos.UserLoginResponse, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "LoginUC")
+	defer span.End()
+
 	dataLogin, err := uc.repo.GetUserByEmail(ctx, request.Email)
 	if err != nil {
 		return response, apperror.InternalServerError(err)
@@ -58,6 +62,9 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 }
 
 func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (userID int64, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "CreateUC")
+	defer span.End()
+
 	if exist := uc.repo.IsUserExist(ctx, payload.Email); exist {
 		return userID, apperror.Conflict(apperror.ErrEmailAlreadyExist)
 	}
@@ -72,6 +79,9 @@ func (uc *usecase) Create(ctx context.Context, payload dtos.CreateUserRequest) (
 }
 
 func (uc *usecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserRequest) error {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "PartialUpdateUC")
+	defer span.End()
+
 	return uc.repo.Atomic(ctx, &sql.TxOptions{}, func(tx users.Repository) error {
 		opt := entities.LockingOpt{
 			PessimisticLocking: true,
@@ -86,6 +96,9 @@ func (uc *usecase) PartialUpdate(ctx context.Context, data dtos.UpdateUserReques
 }
 
 func (uc *usecase) UpdateStatus(ctx context.Context, req dtos.UpdateUserStatusRequest) error {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "UpdateStatusUC")
+	defer span.End()
+
 	if _, err := uc.repo.GetUserByID(ctx, req.UserID, entities.LockingOpt{}); err != nil {
 		return err
 	}
@@ -94,6 +107,9 @@ func (uc *usecase) UpdateStatus(ctx context.Context, req dtos.UpdateUserStatusRe
 }
 
 func (uc *usecase) Detail(ctx context.Context, id int64) (detail dtos.UserDetailResponse, err error) {
+	ctx, span := instrumentation.NewTraceSpan(ctx, "DetailUC")
+	defer span.End()
+
 	userDetail, err := uc.repo.GetUserByID(ctx, id)
 	if err != nil {
 		return detail, apperror.InternalServerError(err)
