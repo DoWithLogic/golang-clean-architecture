@@ -22,6 +22,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+const (
+	KeyUnitTest = "DoWithLogic!@#"
+)
+
 func createUserMatcher(user entities.User) gomock.Matcher {
 	return eqUserMatcher{
 		users: user,
@@ -52,8 +56,8 @@ func Test_usecase_CreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
+	crypto := app_crypto.NewCrypto(KeyUnitTest)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -123,8 +127,8 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
+	crypto := app_crypto.NewCrypto(KeyUnitTest)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -181,8 +185,8 @@ func Test_usecase_Detail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
+	crypto := app_crypto.NewCrypto(KeyUnitTest)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -230,8 +234,8 @@ func Test_usecase_Login(t *testing.T) {
 		email    = "martin@test.com"
 	)
 
-	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
+	crypto := app_crypto.NewCrypto(KeyUnitTest)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -289,8 +293,8 @@ func Test_usecase_PartialUpdate(t *testing.T) {
 		}
 	)
 
-	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
+	crypto := app_crypto.NewCrypto(KeyUnitTest)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
