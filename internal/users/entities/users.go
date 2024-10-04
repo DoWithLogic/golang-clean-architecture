@@ -3,9 +3,7 @@ package entities
 import (
 	"time"
 
-	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 )
 
@@ -27,11 +25,11 @@ type (
 	}
 )
 
-func NewCreateUser(data dtos.CreateUserRequest, cfg config.Config) User {
+func NewCreateUser(data dtos.CreateUserRequest) User {
 	return User{
 		Fullname:    data.FullName,
 		Email:       data.Email,
-		Password:    app_crypto.NewCrypto(cfg.Authentication.Key).EncodeSHA256(data.Password),
+		Password:    data.Password,
 		PhoneNumber: data.PhoneNumber,
 		UserType:    constant.UserTypeRegular,
 		IsActive:    true,

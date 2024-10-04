@@ -14,6 +14,7 @@ import (
 	mocks "github.com/DoWithLogic/golang-clean-architecture/internal/users/mock"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 	"github.com/go-faker/faker/v4"
@@ -51,15 +52,14 @@ func Test_usecase_CreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
-		config.Config{
-			Authentication: config.AuthenticationConfig{
-				Key: "DoWithLogic!@#",
-			},
-		},
+		appJwt,
+		crypto,
 	)
 
 	newUser := dtos.CreateUserRequest{
@@ -123,11 +123,14 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,
-		config.Config{Authentication: config.AuthenticationConfig{Key: "secret-key"}},
+		appJwt,
+		crypto,
 	)
 
 	args := dtos.UpdateUserStatusRequest{
@@ -178,9 +181,15 @@ func Test_usecase_Detail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, config.Config{})
+	uc := usecase.NewUseCase(
+		repo,
+		appJwt,
+		crypto,
+	)
 
 	var id int64 = 1
 
@@ -219,20 +228,22 @@ func Test_usecase_Login(t *testing.T) {
 	var (
 		password = "testing"
 		email    = "martin@test.com"
-
-		config = config.Config{
-			Authentication: config.AuthenticationConfig{Key: "DoWithLogic!@#"},
-		}
 	)
 
+	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, config)
+	uc := usecase.NewUseCase(
+		repo,
+		appJwt,
+		crypto,
+	)
 
 	returnedUser := entities.User{
 		UserID:   1,
 		Email:    email,
-		Password: app_crypto.NewCrypto(config.Authentication.Key).EncodeSHA256(password),
+		Password: crypto.EncodeSHA256(password),
 	}
 
 	t.Run("login_positive", func(t *testing.T) {
@@ -276,16 +287,16 @@ func Test_usecase_PartialUpdate(t *testing.T) {
 			},
 			UserID: 1,
 		}
-
-		config = config.Config{
-			Authentication: config.AuthenticationConfig{
-				Key: "DoWithLogic!@#",
-			},
-		}
 	)
 
+	crypto := app_crypto.NewCrypto("DoWithLogic!@#")
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: "DoWithLogic!@#", Expired: 60, Label: "XXXX"})
 	repo := mocks.NewMockRepository(ctrl)
-	uc := usecase.NewUseCase(repo, config)
+	uc := usecase.NewUseCase(
+		repo,
+		appJwt,
+		crypto,
+	)
 
 	repo.EXPECT().Atomic(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
