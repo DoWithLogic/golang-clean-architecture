@@ -68,6 +68,7 @@ func NewClient(log *zerolog.Logger) *AppHttp {
 		log: log,
 	}
 }
+
 func (c *AppHttp) DoHttpRequest(ctx context.Context, req Request, res any) error {
 	ctx, span := instrumentation.NewTraceSpan(ctx, "DoHttpRequest")
 	defer span.End()
@@ -83,49 +84,19 @@ func (c *AppHttp) DoHttpRequest(ctx context.Context, req Request, res any) error
 		fasthttp.ReleaseResponse(response)
 	}()
 
+	// Set method, URI, and headers
 	request.Header.SetMethod(req.Method)
 	request.SetRequestURI(req.Endpoint)
-
-	// Set request headers
 	for key, value := range req.Headers {
 		request.Header.Set(key, value)
 	}
-	// If there are files to upload, create multipart form data
-	if req.Files != nil {
-		var buffer bytes.Buffer
-		writer := multipart.NewWriter(&buffer)
 
-		// Add files to the form
-		for key, file := range req.Files {
-			part, err := writer.CreateFormFile(key, file.FileName) // Adjust filename as needed
-			if err != nil {
-				return errors.Wrap(err, "failed to create form file")
-			}
-
-			if _, err := io.Copy(part, file.File); err != nil {
-				return errors.Wrap(err, "failed to copy file to form")
-			}
-		}
-
-		// Close the writer to finalize the form data
-		if err := writer.Close(); err != nil {
-			return errors.Wrap(err, "failed to close writer")
-		}
-
-		request.SetBody(buffer.Bytes())
-		request.Header.Set("Content-Type", writer.FormDataContentType())
-	} else if req.Body != nil {
-		// If there is a body, marshal it to JSON
-		jsonBody, err := json.Marshal(req.Body)
-		if err != nil {
-			c.log.Err(err).Ctx(ctx).Msg("[DoHttpRequest]Marshal")
-			return errors.Wrap(err, "failed to marshal request body")
-		}
-
-		request.SetBody(jsonBody)
-		request.Header.Set("Content-Type", constant.MIMEApplicationJSON)
+	// Handle body or multipart files
+	if err := c.prepareRequestBody(request, req); err != nil {
+		return err
 	}
 
+	// Log request
 	start := time.Now()
 	c.log.Info().Ctx(ctx).
 		Str("method", req.Method).
@@ -134,34 +105,81 @@ func (c *AppHttp) DoHttpRequest(ctx context.Context, req Request, res any) error
 		Interface("body", string(request.Body())).
 		Msg("[DoHttpRequest]Sending request")
 
-	// Perform the request
+	// Execute request
 	if err := c.client.Do(request, response); err != nil {
 		c.log.Err(err).Ctx(ctx).Msg("[DoHttpRequest]client.Do")
 		return errors.Wrap(err, "failed to execute HTTP request")
 	}
 
+	// Log response
 	c.log.Info().Ctx(ctx).
 		Int("status_code", response.StatusCode()).
 		Dur("duration", time.Since(start)).
 		RawJSON("response", response.Body()).
 		Msg("[DoHttpRequest]Received response")
 
-	// Check response status code
-	if response.StatusCode() != fasthttp.StatusOK {
-		c.log.Error().Ctx(ctx).
-			Int("status_code", response.StatusCode()).
-			Dur("duration", time.Since(start)).
-			Msg("[DoHttpRequest] Unexpected status code")
-
-		return fmt.Errorf("unexpected status code: %v", response.StatusCode())
+	// Check status code and decode response
+	if err := c.checkStatusCode(response); err != nil {
+		return err
 	}
 
-	// Decode response if a response struct is provided
-	if response != nil {
+	if res != nil {
 		if err := json.Unmarshal(response.Body(), res); err != nil {
 			c.log.Err(err).Ctx(ctx).Msg("[DoHttpRequest]json.Unmarshal")
 			return errors.Wrap(err, "failed to decode response")
 		}
 	}
+
+	return nil
+}
+
+func (c *AppHttp) checkStatusCode(response *fasthttp.Response) error {
+	if response.StatusCode() != fasthttp.StatusOK {
+		return fmt.Errorf("unexpected status code: %v", response.StatusCode())
+	}
+
+	return nil
+}
+
+func (c *AppHttp) prepareRequestBody(request *fasthttp.Request, req Request) error {
+	if req.Files != nil {
+		return c.prepareMultipartBody(request, req)
+	}
+
+	if req.Body != nil {
+		jsonBody, err := json.Marshal(req.Body)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal request body")
+		}
+
+		request.SetBody(jsonBody)
+		request.Header.Set("Content-Type", constant.MIMEApplicationJSON)
+	}
+
+	return nil
+}
+
+func (c *AppHttp) prepareMultipartBody(request *fasthttp.Request, req Request) error {
+	var buffer bytes.Buffer
+	writer := multipart.NewWriter(&buffer)
+
+	for key, file := range req.Files {
+		part, err := writer.CreateFormFile(key, file.FileName)
+		if err != nil {
+			return errors.Wrap(err, "failed to create form file")
+		}
+
+		if _, err := io.Copy(part, file.File); err != nil {
+			return errors.Wrap(err, "failed to copy file to form")
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return errors.Wrap(err, "failed to close writer")
+	}
+
+	request.SetBody(buffer.Bytes())
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+
 	return nil
 }
