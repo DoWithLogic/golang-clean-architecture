@@ -51,5 +51,8 @@ func main() {
 		}()
 	}
 
-	app.NewApp(context.Background(), cfg).Run()
+	if err := app.NewApp(context.Background(), cfg).Run(); err != nil {
+		log.Print("Unable to start app")
+		return
+	}
 }

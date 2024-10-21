@@ -49,14 +49,33 @@ func (app *App) Run() error {
 		<-quit
 		log.Info("Server is shutting down...")
 
-		// Create a context with a timeout of 10 seconds for the server shutdown.
+		// Create a context with a timeout to ensure graceful shutdown
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// Shutdown gracefully.
-		app.db.DB.Close()
-		app.echo.Shutdown(ctx)
+		// Attempt to gracefully shutdown the Echo server
+		if err := app.echo.Shutdown(ctx); err != nil {
+			log.Errorf("Server shutdown failed: %v", err)
+		} else {
+			log.Info("Server shutdown gracefully")
+		}
+
+		// Close the database connection
+		if err := app.db.DB.Close(); err != nil {
+			log.Errorf("Database connection close failed: %v", err)
+		} else {
+			log.Info("Database connection closed")
+		}
 	}()
 
-	return app.echo.Start(fmt.Sprintf(":%s", app.cfg.Server.Port))
+	// Start the Echo server
+	port := fmt.Sprintf(":%s", app.cfg.Server.Port)
+	log.Infof("Server is starting on port %s", port)
+
+	if err := app.echo.Start(port); err != nil {
+		log.Errorf("Error starting server: %v", err)
+		return err
+	}
+
+	return nil
 }
