@@ -15,14 +15,14 @@ import (
 // initializeTracerProvider initializes and configures a tracer provider based on the observability mode from the configuration.
 // It supports OTLP gRPC, OTLP HTTP, and stdout (default) exporters for trace data.
 // Returns a tracer provider instance or an error if initialization fails.
-func InitTracerProvider(config config.Config) (*sdktrace.TracerProvider, error) {
+func InitTracerProvider(observabilityCfg config.ObservabilityConfig, appCfg config.AppConfig) (*sdktrace.TracerProvider, error) {
 	var (
 		exporter sdktrace.SpanExporter
 		err      error
 	)
 
 	// Determine the exporter type based on the observability mode.
-	switch config.Observability.Mode {
+	switch observabilityCfg.Mode {
 	case OTLP_GRPC_MODE:
 		exporter, err = otlptracegrpc.New(
 			context.Background(),
@@ -45,7 +45,7 @@ func InitTracerProvider(config config.Config) (*sdktrace.TracerProvider, error) 
 	tracerProvider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithBatcher(exporter),
-		sdktrace.WithResource(initResource(config.App.Name, config.App.Version, config.App.Environment)),
+		sdktrace.WithResource(initResource(appCfg.Name, appCfg.Version, appCfg.Environment)),
 	)
 
 	// Set the global tracer provider for the OpenTelemetry API.

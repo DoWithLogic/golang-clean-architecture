@@ -28,14 +28,14 @@ const (
 // Returns:
 // - A pointer to an OpenTelemetry MeterProvider.
 // - An error if any occurs during initialization or setting up the provider.
-func InitMeterProvider(config config.Config) (*sdkmetric.MeterProvider, error) {
+func InitMeterProvider(observability config.ObservabilityConfig, app config.AppConfig) (*sdkmetric.MeterProvider, error) {
 	var (
 		exporter sdkmetric.Exporter
 		err      error
 	)
 
 	// Determine the type of metric exporter based on the observability mode.
-	switch config.Observability.Mode {
+	switch observability.Mode {
 	case OTLP_HTTP_MODE:
 		exporter, err = otlpmetrichttp.New(
 			context.Background(),
@@ -57,7 +57,7 @@ func InitMeterProvider(config config.Config) (*sdkmetric.MeterProvider, error) {
 	// Create and configure the MeterProvider with a periodic reader for exporting metrics.
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(2*time.Second))),
-		sdkmetric.WithResource(initResource(config.App.Name, config.App.Version, config.App.Environment)),
+		sdkmetric.WithResource(initResource(app.Name, app.Version, app.Environment)),
 	)
 
 	// Set the MeterProvider as the global meter provider.

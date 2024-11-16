@@ -29,13 +29,13 @@ func main() {
 	// Initialize observability components if observability is enabled in the configuration.
 	if cfg.Observability.Enable {
 		// Initialize the tracer provider for distributed tracing.
-		tracer, err := observability.InitTracerProvider(cfg)
+		tracer, err := observability.InitTracerProvider(cfg.Observability, cfg.App)
 		if err != nil {
 			log.Warn("Failed to initialize tracer: ", err)
 		}
 
 		// Initialize the meter provider for metrics collection.
-		meter, err := observability.InitMeterProvider(cfg)
+		meter, err := observability.InitMeterProvider(cfg.Observability, cfg.App)
 		if err != nil {
 			log.Warn("Failed to initialize meter: ", err)
 		}
