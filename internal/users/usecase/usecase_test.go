@@ -15,6 +15,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_redis"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
 	"github.com/go-faker/faker/v4"
@@ -56,8 +57,11 @@ func Test_usecase_CreateUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	redis := app_redis.NewRedis(nil)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"}, redis)
+
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
+
 	ctx := context.TODO()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -128,7 +132,8 @@ func Test_usecase_UpdateUserStatus(t *testing.T) {
 	defer ctrl.Finish()
 
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
+	redis := app_redis.NewRedis(nil)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"}, redis)
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -186,7 +191,8 @@ func Test_usecase_Detail(t *testing.T) {
 	defer ctrl.Finish()
 
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
+	redis := app_redis.NewRedis(nil)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"}, redis)
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -235,7 +241,8 @@ func Test_usecase_Login(t *testing.T) {
 	)
 
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
+	redis := app_redis.NewRedis(nil)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"}, redis)
 	ctx := context.Background()
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
@@ -294,7 +301,8 @@ func Test_usecase_PartialUpdate(t *testing.T) {
 	)
 
 	crypto := app_crypto.NewCrypto(KeyUnitTest)
-	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"})
+	redis := app_redis.NewRedis(nil)
+	appJwt := app_jwt.NewJWT(config.JWTConfig{Key: KeyUnitTest, Expired: 60, Label: "XXXX"}, redis)
 	repo := mocks.NewMockRepository(ctrl)
 	uc := usecase.NewUseCase(
 		repo,

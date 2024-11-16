@@ -51,3 +51,7 @@ const (
 	AuthorizationHeaderKey = "Authorization"
 	AuthCredentialKey      = "authCredential"
 )
+
+const (
+	TokenRevoked = "REVOKED"
+)

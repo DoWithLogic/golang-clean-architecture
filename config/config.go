@@ -17,6 +17,7 @@ type (
 		Authentication AuthenticationConfig
 		Observability  ObservabilityConfig
 		JWT            JWTConfig
+		Redis          RedisConfig
 	}
 
 	// AppConfig holds the configuration related to the application settings.
@@ -42,6 +43,12 @@ type (
 		Name     string
 		User     string
 		Password string
+	}
+
+	RedisConfig struct {
+		Addr     string // The address of the database.
+		Password string // The password for connecting to the database.
+		DB       int    // The name of the database.
 	}
 
 	AuthenticationConfig struct {
