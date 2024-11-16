@@ -23,3 +23,8 @@ Authentication:
 Observability:
   Enable: false
   Mode: "otlp/http"
+
+Redis:
+  Addr: "localhost:6379"
+  Password: ""
+  DB: 0

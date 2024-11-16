@@ -1,9 +1,9 @@
 package v1
 
 import (
-	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
@@ -64,7 +64,7 @@ func (h *handlers) UserDetail(c echo.Context) error {
 	ctx, span := instrumentation.NewTraceSpan(c.Request().Context(), "UserDetailHandler")
 	defer span.End()
 
-	userData, err := middleware.NewTokenInformation(c)
+	userData, err := app_jwt.NewTokenInformation(c)
 	if err != nil {
 		return response.ErrorBuilder(err).Send(c)
 	}
@@ -90,7 +90,7 @@ func (h *handlers) UpdateUser(c echo.Context) error {
 		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	userData, err := middleware.NewTokenInformation(c)
+	userData, err := app_jwt.NewTokenInformation(c)
 	if err != nil {
 		return response.ErrorBuilder(err).Send(c)
 	}
@@ -120,7 +120,7 @@ func (h *handlers) UpdateUserStatus(c echo.Context) error {
 		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
 	}
 
-	userData, err := middleware.NewTokenInformation(c)
+	userData, err := app_jwt.NewTokenInformation(c)
 	if err != nil {
 		return response.ErrorBuilder(err).Send(c)
 	}

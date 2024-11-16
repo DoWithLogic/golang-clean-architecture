@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/users/entities"
@@ -42,8 +41,8 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 		return response, apperror.Unauthorized(apperror.ErrInvalidPassword)
 	}
 
-	claims := middleware.PayloadToken{
-		Data: &middleware.Data{
+	claims := app_jwt.PayloadToken{
+		Data: &app_jwt.Data{
 			UserID: dataLogin.UserID,
 			Email:  dataLogin.Email,
 		},

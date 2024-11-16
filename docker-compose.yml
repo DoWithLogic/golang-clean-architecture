@@ -21,3 +21,15 @@ services:
       sh -c "
         echo 'CREATE DATABASE IF NOT EXISTS users;' > /docker-entrypoint-initdb.d/init.sql;
         /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"
+
+  redis:
+    image: redis:latest
+    container_name: redis-db
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 0.5s
+      timeout: 10s
+      retries: 5
