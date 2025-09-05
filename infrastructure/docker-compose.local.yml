@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  mysql-db:
+    image: mysql:latest
+    container_name: mysql-db
+    environment:
+      TZ: Asia/Jakarta
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-pwd}
+      MYSQL_USER: ${MYSQL_USER:-admin}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pwd}
+    restart: unless-stopped
+    ports:
+      - 3307:3306
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u root --password=${MYSQL_ROOT_PASSWORD:-pwd}",
+        ]
+      interval: 0.5s
+      timeout: 10s
+      retries: 10
+    entrypoint: sh -c "
+      echo 'CREATE DATABASE IF NOT EXISTS golang_clean_architecture;' > /docker-entrypoint-initdb.d/init.sql;
+      /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"

@@ -90,10 +90,21 @@ The DIP promotes high-level modules (e.g., use cases) to depend on abstractions 
 
 ## 🏗️ How To Run
 
-setup environment and running on local
+Start MySQL Container
 ```bash
-make run    # Start the database, run migrations, and start the application locally
+make setup    # Start MySQL database in Docker container
 ```
+
+Run Database Migrations
+```bash
+make migrate-up    # Apply database migrations
+```
+
+Run Application Locally
+```bash
+make run    # Setup environment, run migrations, and start the application
+```
+
 
 
 ## ✨ References
