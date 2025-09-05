@@ -1,0 +1,360 @@
+basePath: /api/v1
+definitions:
+  dtos.SignUpRequest:
+    properties:
+      contact_type:
+        $ref: '#/definitions/types.CONTACT_TYPE'
+      contact_value:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  dtos.TransitionUserStatusRequest:
+    properties:
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/types.USER_STATUS'
+    type: object
+  dtos.User:
+    properties:
+      birth_date:
+        type: string
+      contact_type:
+        $ref: '#/definitions/types.CONTACT_TYPE'
+      contact_value:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      language:
+        $ref: '#/definitions/types.LANGUAGE'
+      name:
+        type: string
+      password:
+        type: string
+      status:
+        $ref: '#/definitions/types.USER_STATUS'
+      updated_at:
+        type: string
+    type: object
+  dtos.UserLoginRequest:
+    properties:
+      contact_type:
+        $ref: '#/definitions/types.CONTACT_TYPE'
+      contact_value:
+        type: string
+      password:
+        type: string
+    type: object
+  dtos.UserLoginResponse:
+    properties:
+      access_token:
+        type: string
+      expired_at:
+        type: integer
+    type: object
+  dtos.UserUpdateRequest:
+    properties:
+      birth_date:
+        type: string
+      contact_type:
+        $ref: '#/definitions/types.CONTACT_TYPE'
+      contact_value:
+        type: string
+      id:
+        type: integer
+      language:
+        $ref: '#/definitions/types.LANGUAGE'
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  response.FailedResponse:
+    properties:
+      code:
+        description: HTTP status code.
+        example: 500
+        type: integer
+      error:
+        description: error message.
+        example: '{$err}'
+        type: string
+      message:
+        description: Message corresponding to the status code.
+        example: internal_server_error
+        type: string
+    type: object
+  response.ResponseFormat:
+    properties:
+      code:
+        description: HTTP status code.
+        example: 200
+        type: integer
+      message:
+        example: success
+        type: string
+    type: object
+  response.Success:
+    properties:
+      code:
+        description: HTTP status code.
+        example: 200
+        type: integer
+      data:
+        description: data payload.
+      message:
+        example: success
+        type: string
+    type: object
+  types.CONTACT_TYPE:
+    enum:
+    - EMAIL
+    - PHONE
+    type: string
+    x-enum-varnames:
+    - CONTACT_TYPE_EMAIL
+    - CONTACT_TYPE_PHONE
+  types.LANGUAGE:
+    enum:
+    - EN
+    - ID
+    type: string
+    x-enum-varnames:
+    - LANGUAGE_EN
+    - LANGUAGE_ID
+  types.USER_STATUS:
+    enum:
+    - PENDING
+    - ACTIVE
+    - REJECT
+    - CLOSED
+    type: string
+    x-enum-varnames:
+    - PENDING
+    - ACTIVE
+    - REJECT
+    - BANNED
+info:
+  contact: {}
+  description: |-
+    ## Golang Clean Architecture
+
+    This is an example of implementation of Clean Architecture with S.O.L.I.D Principles in Go (Golang) projects.
+
+    Rule of Clean Architecture by Uncle Bob
+
+    - Independent of Frameworks. The architecture does not depend on the existence of some library of feature laden software. This allows you to use such frameworks as tools, rather than having to cram your system into their limited constraints.
+    - Testable. The business rules can be tested without the UI, Database, Web Server, or any other external element.
+    - Independent of UI. The UI can change easily, without changing the rest of the system. A Web UI could be replaced with a console UI, for example, without changing the business rules.
+    - Independent of Database. You can swap out Oracle or SQL Server, for Mongo, BigTable, CouchDB, or something else. Your business rules are not bound to the database.
+    - Independent of any external agency. In fact your business rules simply don’t know anything at all about the outside world.
+
+    More at https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html
+  termsOfService: https://github.com/DoWithLogic/golang-clean-architecture
+  title: golang-clean-architecture
+  version: v0.0.1
+paths:
+  /user/{id}/detail:
+    get:
+      consumes:
+      - application/json
+      description: User Detail By ID
+      operationId: user-detail-by-id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Success'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.User'
+              type: object
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      security:
+      - BearerToken: []
+      summary: User Detail By ID
+      tags:
+      - Users
+  /user/{id}/status/transition:
+    put:
+      consumes:
+      - application/json
+      description: Transition User Status
+      operationId: transition-user-status
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Transition User Status Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.TransitionUserStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            $ref: '#/definitions/response.ResponseFormat'
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      security:
+      - BearerToken: []
+      summary: Transition User Status
+      tags:
+      - Users
+  /user/{id}/update:
+    patch:
+      consumes:
+      - application/json
+      description: Update User
+      operationId: update-user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update User Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            $ref: '#/definitions/response.ResponseFormat'
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      security:
+      - BearerToken: []
+      summary: Update User
+      tags:
+      - Users
+  /user/contact/{contact_value}/detail:
+    get:
+      consumes:
+      - application/json
+      description: User Detail By Contact
+      operationId: user-detail-by-contact
+      parameters:
+      - description: User Contact
+        in: path
+        name: contact_value
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Success'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.User'
+              type: object
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      security:
+      - BearerToken: []
+      summary: User Detail By Contact
+      tags:
+      - Users
+  /user/public/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      operationId: login
+      parameters:
+      - description: Login Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Success'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.UserLoginResponse'
+              type: object
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      summary: Login
+      tags:
+      - Users
+  /user/public/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Sign Up
+      operationId: sign-up
+      parameters:
+      - description: Sign Up Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SUCCESS
+          schema:
+            $ref: '#/definitions/response.ResponseFormat'
+        "500":
+          description: INTERNAL_SERVER__ERROR
+          schema:
+            $ref: '#/definitions/response.FailedResponse'
+      summary: Sign Up
+      tags:
+      - Users
+securityDefinitions:
+  BearerToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -2,7 +2,7 @@ App:
   Name: "golang-clean-architecture"
   Version: "v0.0.1"
   Scheme: "http"
-  Host: "localhost:3002"
+  Host: "localhost:9090"
   Environment: local #local,development,staging,production
 
 Server:
@@ -10,12 +10,13 @@ Server:
   Debug: true
   TimeZone: "Asia/Jakarta"
 
-Database: 
-  Host: 127.0.0.1
-  Port: 3306
-  Name: users
-  User: root
-  Password: pwd
+Database:
+  Host: "127.0.0.1"
+  Port: "3307"
+  DBName: "golang_clean_architecture"
+  UserName: "root"
+  Password: "pwd"
+  Debug: true
 
 Authentication:
   Key: DoWithLogic!@#
@@ -23,8 +24,3 @@ Authentication:
 Observability:
   Enable: false
   Mode: "otlp/http"
-
-Redis:
-  Addr: "localhost:6379"
-  Password: ""
-  DB: 0

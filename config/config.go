@@ -24,7 +24,7 @@ type (
 	AppConfig struct {
 		Name        string
 		Version     string
-		Schema      string
+		Scheme      string
 		Host        string
 		Environment string
 	}
@@ -38,11 +38,12 @@ type (
 
 	// DatabaseConfig holds the configuration for the database connection.
 	DatabaseConfig struct {
-		Host     string
-		Port     int
-		Name     string
-		User     string
-		Password string
+		Host     string // The host address of the database.
+		Port     string // The port number of the database.
+		DBName   string // The name of the database.
+		UserName string // The username for connecting to the database.
+		Password string // The password for connecting to the database.
+		Debug    bool   // The Debug for debugging when query executed.
 	}
 
 	RedisConfig struct {

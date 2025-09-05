@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/constant"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/constants"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -26,7 +26,7 @@ func NewMiddleware(jwt *app_jwt.JWT) *Middleware {
 func (m *Middleware) JWTMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			token := c.Request().Header.Get(constant.AuthorizationHeaderKey)
+			token := c.Request().Header.Get(constants.AuthorizationHeaderKey)
 			if token == "" {
 				return response.ErrorBuilder(apperror.Unauthorized(errMissingJwtToken)).Send(c)
 			}

@@ -15,6 +15,9 @@ var (
 	ErrStatusValue       = errors.New("status should be 0 or 1")
 
 	ErrFailedGetTokenInformation = errors.New("failed to get token information")
+
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 type AppError struct {
@@ -25,6 +28,10 @@ type AppError struct {
 
 func Equals(err error, expectedErr error) bool {
 	return strings.EqualFold(err.Error(), expectedErr.Error())
+}
+
+func (e *AppError) Unwrap() error {
+	return e.Err
 }
 
 func (h AppError) Error() string {

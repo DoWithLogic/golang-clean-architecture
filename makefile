@@ -2,6 +2,14 @@
 MIGRATION_DIR := database/mysql/migration
 IS_IN_PROGRESS = "is in progress ..."
 
+# Get list of domains, compatible with Unix-like systems
+OS := $(shell uname 2>/dev/null || echo Unknown)
+ifeq ($(OS),Unknown)
+    DOMAINS := $(shell for /d %D in (internal/app/*) do @echo %~nxD)  # Windows cmd (not perfect)
+else
+    DOMAINS := $(shell find internal/app -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+endif
+
 .PHONY: all
 all: env install mod
 
@@ -27,40 +35,46 @@ mod:
 	@go mod tidy
 	@go mod vendor
 
-## setup: Set up database temporary for integration testing
+## setup: Set up database temporary for local environtment
 .PHONY: setup
 setup:
 	@echo "make setup ${IS_IN_PROGRESS}"
-	@docker-compose up -d
+	@docker-compose -f ./infrastructure/docker-compose.local.yml up -d
 	@sleep 8
 
 ## down: Set down database temporary for integration testing
 .PHONY: down
 down: 
 	@echo "make down ${IS_IN_PROGRESS}"
-	@docker-compose down -t 1
+	@docker-compose -f ./infrastructure/docker-compose.local.yml down -t 1
 
 ## run: run for running app on local
 .PHONY: run
 run:
-	@go run cmd/api/main.go
+	@go run main.go
 
 
 .PHONY: migration-up
 migration-up:
-	GOOSE_DRIVER=mysql GOOSE_DBSTRING="mysql:pwd@tcp(localhost:3306)/users?parseTime=true" goose -dir=$(MIGRATION_DIR) up
+	GOOSE_DRIVER=mysql GOOSE_DBSTRING="root:pwd@tcp(localhost:3307)/golang_clean_architecture?parseTime=true" goose -dir=$(MIGRATION_DIR) up
 
 .PHONY: migration-down
 migration-down: 
-	GOOSE_DRIVER=mysql GOOSE_DBSTRING="mysql:pwd@tcp(localhost:3306)/users?parseTime=true" goose -dir=$(MIGRATION_DIR) down
+	GOOSE_DRIVER=mysql GOOSE_DBSTRING="root:pwd@tcp(localhost:3307)/golang_clean_architecture?parseTime=true" goose -dir=$(MIGRATION_DIR) down
 
-.PHONY: mock-repository
-mock-repository:
-	mockgen -source internal/users/repository.go -destination internal/users/mock/repository_mock.go -package=mocks
-
-.PHONY: mock-usecase
-mock-usecase:
-	mockgen -source internal/users/usecase.go -destination internal/users/mock/usecase_mock.go -package=mocks
+## generate-mocks: will generate mock for internal/app, internal/integrations, and pkg/integrations
+.PHONY: generate-mocks
+generate-mocks:
+	@mkdir mocks 2>/dev/null || true
+	@domains="$(if $(DOMAIN),$(DOMAIN),$(DOMAINS))"; \
+	for domain in $$domains; do \
+		for file in repository usecase; do \
+			if [ -f internal/app/$$domain/$$file.go ]; then \
+				echo "Generating mock-app for $$file: $$domain"; \
+				mockgen -source internal/app/$$domain/$$file.go -destination mocks/$$domain/$${file}_mock.go -package=mocks; \
+			fi; \
+		done; \
+	done
 
 
 ## unit-test: will test with unit tags
@@ -96,3 +110,9 @@ cover:
 	@make -s cover-with type=integration
 	@make -s cover-with type=unit
 
+
+
+## swagger-gen: swagger-gen for generate swagger documentation
+.PHONY: swagger-gen
+swagger-gen:
+	@swag init -md ./docs/ && ./docs/fix.sh

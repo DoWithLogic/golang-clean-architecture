@@ -1,0 +1,536 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "## Golang Clean Architecture\n\nThis is an example of implementation of Clean Architecture with S.O.L.I.D Principles in Go (Golang) projects.\n\nRule of Clean Architecture by Uncle Bob\n\n- Independent of Frameworks. The architecture does not depend on the existence of some library of feature laden software. This allows you to use such frameworks as tools, rather than having to cram your system into their limited constraints.\n- Testable. The business rules can be tested without the UI, Database, Web Server, or any other external element.\n- Independent of UI. The UI can change easily, without changing the rest of the system. A Web UI could be replaced with a console UI, for example, without changing the business rules.\n- Independent of Database. You can swap out Oracle or SQL Server, for Mongo, BigTable, CouchDB, or something else. Your business rules are not bound to the database.\n- Independent of any external agency. In fact your business rules simply don’t know anything at all about the outside world.\n\nMore at https://8thlight.com/blog/uncle-bob/2012/08/13/the-clean-architecture.html",
+        "title": "golang-clean-architecture",
+        "termsOfService": "https://github.com/DoWithLogic/golang-clean-architecture",
+        "contact": {},
+        "version": "v0.0.1"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/user/contact/{contact_value}/detail": {
+            "get": {
+                "security": [
+                    {
+                        "BearerToken": []
+                    }
+                ],
+                "description": "User Detail By Contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "User Detail By Contact",
+                "operationId": "user-detail-by-contact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Contact",
+                        "name": "contact_value",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Success"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/public/login": {
+            "post": {
+                "description": "Login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Login",
+                "operationId": "login",
+                "parameters": [
+                    {
+                        "description": "Login Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.UserLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Success"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.UserLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/public/sign-up": {
+            "post": {
+                "description": "Sign Up",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Sign Up",
+                "operationId": "sign-up",
+                "parameters": [
+                    {
+                        "description": "Sign Up Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.SignUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseFormat"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}/detail": {
+            "get": {
+                "security": [
+                    {
+                        "BearerToken": []
+                    }
+                ],
+                "description": "User Detail By ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "User Detail By ID",
+                "operationId": "user-detail-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Success"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}/status/transition": {
+            "put": {
+                "security": [
+                    {
+                        "BearerToken": []
+                    }
+                ],
+                "description": "Transition User Status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Transition User Status",
+                "operationId": "transition-user-status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Transition User Status Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.TransitionUserStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseFormat"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}/update": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerToken": []
+                    }
+                ],
+                "description": "Update User",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update User",
+                "operationId": "update-user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update User Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.UserUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SUCCESS",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseFormat"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL_SERVER__ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.FailedResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dtos.SignUpRequest": {
+            "type": "object",
+            "properties": {
+                "contact_type": {
+                    "$ref": "#/definitions/types.CONTACT_TYPE"
+                },
+                "contact_value": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.TransitionUserStatusRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.USER_STATUS"
+                }
+            }
+        },
+        "dtos.User": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string"
+                },
+                "contact_type": {
+                    "$ref": "#/definitions/types.CONTACT_TYPE"
+                },
+                "contact_value": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "language": {
+                    "$ref": "#/definitions/types.LANGUAGE"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/types.USER_STATUS"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UserLoginRequest": {
+            "type": "object",
+            "properties": {
+                "contact_type": {
+                    "$ref": "#/definitions/types.CONTACT_TYPE"
+                },
+                "contact_value": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.UserLoginResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expired_at": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.UserUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "birth_date": {
+                    "type": "string"
+                },
+                "contact_type": {
+                    "$ref": "#/definitions/types.CONTACT_TYPE"
+                },
+                "contact_value": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "language": {
+                    "$ref": "#/definitions/types.LANGUAGE"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.FailedResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "HTTP status code.",
+                    "type": "integer",
+                    "example": 500
+                },
+                "error": {
+                    "description": "error message.",
+                    "type": "string",
+                    "example": "{$err}"
+                },
+                "message": {
+                    "description": "Message corresponding to the status code.",
+                    "type": "string",
+                    "example": "internal_server_error"
+                }
+            }
+        },
+        "response.ResponseFormat": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "HTTP status code.",
+                    "type": "integer",
+                    "example": 200
+                },
+                "message": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "response.Success": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "HTTP status code.",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "data payload."
+                },
+                "message": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "types.CONTACT_TYPE": {
+            "type": "string",
+            "enum": [
+                "EMAIL",
+                "PHONE"
+            ],
+            "x-enum-varnames": [
+                "CONTACT_TYPE_EMAIL",
+                "CONTACT_TYPE_PHONE"
+            ]
+        },
+        "types.LANGUAGE": {
+            "type": "string",
+            "enum": [
+                "EN",
+                "ID"
+            ],
+            "x-enum-varnames": [
+                "LANGUAGE_EN",
+                "LANGUAGE_ID"
+            ]
+        },
+        "types.USER_STATUS": {
+            "type": "string",
+            "enum": [
+                "PENDING",
+                "ACTIVE",
+                "REJECT",
+                "CLOSED"
+            ],
+            "x-enum-varnames": [
+                "PENDING",
+                "ACTIVE",
+                "REJECT",
+                "BANNED"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BearerToken": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
