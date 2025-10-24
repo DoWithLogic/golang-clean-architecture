@@ -10,8 +10,8 @@ import (
 	userRepository "github.com/DoWithLogic/golang-clean-architecture/internal/app/users/repository"
 	userUseCase "github.com/DoWithLogic/golang-clean-architecture/internal/app/users/usecase"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/encryptions"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
 	"github.com/labstack/echo/v4"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -52,8 +52,8 @@ func (s *Server) setup() error {
 	domain.GET("/swagger/doc.json", customSwaggerHandler)
 
 	var (
-		crypto     = app_crypto.NewCrypto(s.cfg.Authentication.Key)
-		jwt        = app_jwt.NewJWT(s.cfg.JWT)
+		crypto     = encryptions.NewCrypto(s.cfg.Authentication.Key)
+		jwt        = security.NewJWT(s.cfg.JWT)
 		middleware = middleware.NewMiddleware(jwt)
 
 		userRepo = userRepository.NewRepository(s.db)

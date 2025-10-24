@@ -1,4 +1,4 @@
-package app_crypto_test
+package encryptions_test
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/encryptions"
 )
 
 func TestCipherEncryptDecrypt(t *testing.T) {
@@ -15,7 +15,7 @@ func TestCipherEncryptDecrypt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cipher, err := app_crypto.NewES256(key)
+	cipher, err := encryptions.NewES256(key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestInvalidCiphertextLength(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cipher, err := app_crypto.NewES256(key)
+	cipher, err := encryptions.NewES256(key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestInvalidBlockSize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cipher, err := app_crypto.NewES256(key)
+	cipher, err := encryptions.NewES256(key)
 	if err != nil {
 		t.Fatal(err)
 	}

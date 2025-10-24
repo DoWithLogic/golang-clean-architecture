@@ -1,4 +1,4 @@
-package app_crypto
+package encryptions
 
 import (
 	"crypto/cipher"

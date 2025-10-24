@@ -1,4 +1,4 @@
-package app_http_test
+package transporter_test
 
 import (
 	"context"
@@ -8,15 +8,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_http"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/constants"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/transporter"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDoHttpRequestError(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	appHttp := app_http.NewClient(&logger)
+	appHttp := transporter.NewClient(&logger)
 
 	// Create a test server that returns an error response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func TestDoHttpRequestError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	req := app_http.Request{
+	req := transporter.Request{
 		Method:   "GET",
 		Endpoint: server.URL + "/nonexistent", // Use the test server URL
 		Headers:  map[string]string{"Content-Type": constants.MIMEApplicationJSON},
@@ -46,7 +46,7 @@ func TestDoHttpRequestError(t *testing.T) {
 
 func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	appHttp := app_http.NewClient(&logger)
+	appHttp := transporter.NewClient(&logger)
 
 	// Create a test server that returns a mocked response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +69,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	req := app_http.Request{
+	req := transporter.Request{
 		Method:   "POST",
 		Endpoint: server.URL + "/test",
 		Headers:  map[string]string{"Content-Type": constants.MIMEApplicationJSON},
@@ -90,7 +90,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 
 func TestDoHttpRequestWithFormFile(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	appHttp := app_http.NewClient(&logger)
+	appHttp := transporter.NewClient(&logger)
 
 	// Create a test server that handles form file uploads
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,11 +131,11 @@ func TestDoHttpRequestWithFormFile(t *testing.T) {
 	defer tempFile.Close()
 
 	// Prepare the request with the file
-	req := app_http.Request{
+	req := transporter.Request{
 		Method:   http.MethodPost,
 		Endpoint: server.URL + "/upload",
 		Headers:  map[string]string{"Content-Type": constants.MIMEMultipartForm},
-		Files: map[string]app_http.File{
+		Files: map[string]transporter.File{
 			"file": {
 				FileName: "fileku.text",
 				File:     tempFile,

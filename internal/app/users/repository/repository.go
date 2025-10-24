@@ -7,7 +7,7 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/entities"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/types"
 	"gorm.io/gorm"
@@ -72,7 +72,7 @@ func (r *repository) UserDetail(ctx context.Context, opts ...entities.UserDetail
 
 	if err := baseQuery.Take(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return user, apperror.NotFound(apperror.ErrUserNotFound)
+			return user, errs.NotFound(errs.ErrUserNotFound)
 		}
 
 		return user, err

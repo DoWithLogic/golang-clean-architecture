@@ -7,7 +7,7 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/entities"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 )
 
@@ -21,7 +21,7 @@ func (uc *usecase) UserUpdate(ctx context.Context, request dtos.UserUpdateReques
 
 	if request.ContactValue != nil {
 		if uc.repo.IsUserExists(ctx, *request.ContactValue) {
-			return apperror.Conflict(apperror.ErrUserAlreadyExists)
+			return errs.Conflict(errs.ErrUserAlreadyExists)
 		}
 	}
 
@@ -37,7 +37,7 @@ func (uc *usecase) UserUpdate(ctx context.Context, request dtos.UserUpdateReques
 	})
 
 	if err != nil {
-		return apperror.InternalServerError(err)
+		return errs.InternalServerError(err)
 	}
 
 	return nil

@@ -2,15 +2,15 @@ package usecase
 
 import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_crypto"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_jwt"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/encryptions"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
 	"github.com/invopop/validation"
 )
 
 type usecase struct {
 	repo   users.Repository
-	appJwt *app_jwt.JWT
-	crypto *app_crypto.Crypto
+	appJwt *security.JWT
+	crypto *encryptions.Crypto
 }
 
 type Dependencies struct {
@@ -26,8 +26,8 @@ type Repositories struct {
 }
 
 type Pkgs struct {
-	AppJwt *app_jwt.JWT
-	Crypto *app_crypto.Crypto
+	AppJwt *security.JWT
+	Crypto *encryptions.Crypto
 }
 
 func (d Dependencies) toUsecase() *usecase {
