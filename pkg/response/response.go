@@ -3,7 +3,7 @@ package response
 import (
 	"net/http"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -44,9 +44,9 @@ func (c BasicResponse) Send(ctx echo.Context) error {
 
 // ErrorBuilder constructs a FailedResponse based on the provided error.
 func ErrorBuilder(err error) FailedResponse {
-	var appErr *apperror.AppError
+	var appErr *errs.AppError
 	if errors.As(err, &appErr) {
-		ae := err.(*apperror.AppError)
+		ae := err.(*errs.AppError)
 
 		return FailedResponse{
 			Code:    ae.Code,

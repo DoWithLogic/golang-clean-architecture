@@ -3,7 +3,7 @@ package v1
 import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/dtos"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
 	"github.com/labstack/echo/v4"
@@ -33,11 +33,11 @@ func (h *handlers) LoginHandler(c echo.Context) error {
 
 	var request dtos.UserLoginRequest
 	if err := c.Bind(&request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	if err := request.Validate(); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	authData, err := h.uc.Login(ctx, request)
@@ -64,11 +64,11 @@ func (h *handlers) SignUpHandler(c echo.Context) error {
 
 	request := new(dtos.SignUpRequest)
 	if err := c.Bind(request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	if err := request.Validate(); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	if err := h.uc.SignUp(ctx, *request); err != nil {
@@ -95,7 +95,7 @@ func (h *handlers) UserDetailByIDHandler(c echo.Context) error {
 
 	request := new(dtos.UserDetailByIDRequest)
 	if err := c.Bind(request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	userData, err := h.uc.UserDetail(ctx, *request)
@@ -123,7 +123,7 @@ func (h *handlers) UserDetailByContactValueHandler(c echo.Context) error {
 
 	request := new(dtos.UserDetailByContactValueRequest)
 	if err := c.Bind(request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	userData, err := h.uc.UserDetail(ctx, *request)
@@ -152,7 +152,7 @@ func (h *handlers) UpdateUserHandler(c echo.Context) error {
 
 	request := new(dtos.UserUpdateRequest)
 	if err := c.Bind(request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	if err := h.uc.UserUpdate(ctx, *request); err != nil {
@@ -180,7 +180,7 @@ func (h *handlers) TransitionUserStatusHandler(c echo.Context) error {
 
 	request := new(dtos.TransitionUserStatusRequest)
 	if err := c.Bind(request); err != nil {
-		return response.ErrorBuilder(apperror.BadRequest(err)).Send(c)
+		return response.ErrorBuilder(errs.BadRequest(err)).Send(c)
 	}
 
 	if err := h.uc.TransitionUserStatus(ctx, *request); err != nil {

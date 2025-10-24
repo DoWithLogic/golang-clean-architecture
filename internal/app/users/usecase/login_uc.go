@@ -6,7 +6,7 @@ import (
 
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/dtos"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/entities"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/apperror"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
 )
 
@@ -20,13 +20,13 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 	}
 
 	if !userData.IsPasswordValid(uc.crypto.EncodeSHA256(request.Password)) {
-		return response, apperror.Unauthorized(apperror.ErrInvalidPassword)
+		return response, errs.Unauthorized(errs.ErrInvalidPassword)
 	}
 
 	expiredAt := time.Now().Add(time.Minute * 60).Unix()
 	jwtToken, err := uc.appJwt.GenerateToken(ctx, userData.ToJWTData(expiredAt))
 	if err != nil {
-		return response, apperror.InternalServerError(err)
+		return response, errs.InternalServerError(err)
 	}
 
 	return dtos.ToUserLoginResponse(jwtToken, expiredAt-time.Now().Unix()), nil
