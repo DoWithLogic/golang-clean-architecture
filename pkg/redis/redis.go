@@ -11,6 +11,7 @@ type Redis interface {
 	Set(ctx context.Context, key string, value string, expiration time.Duration) error
 	Get(ctx context.Context, key string) (data string, err error)
 	Del(ctx context.Context, key string) error
+	Close() error
 }
 
 // redisManager is a concrete implementation of RedisClient
@@ -44,6 +45,4 @@ func (r *redisManager) Del(ctx context.Context, key string) error {
 }
 
 // Close closes the connection to the Redis server.
-func (r *redisManager) Close() error {
-	return r.client.Close()
-}
+func (r *redisManager) Close() error { return r.client.Close() }
