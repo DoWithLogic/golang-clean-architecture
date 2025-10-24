@@ -3,6 +3,7 @@ module github.com/DoWithLogic/golang-clean-architecture
 go 1.23.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/go-playground/validator/v10 v10.20.0

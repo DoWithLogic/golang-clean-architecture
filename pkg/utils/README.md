@@ -1,0 +1,1 @@
+This directory contains utility and helper functions that provide common, reusable logic across the project.
