@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const contentType = "Content-Type"
+
 func TestDoHttpRequestError(t *testing.T) {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 	appHttp := transporter.NewClient(&logger)
@@ -29,7 +31,7 @@ func TestDoHttpRequestError(t *testing.T) {
 	req := transporter.Request{
 		Method:   "GET",
 		Endpoint: server.URL + "/nonexistent", // Use the test server URL
-		Headers:  map[string]string{"Content-Type": constants.MIMEApplicationJSON},
+		Headers:  map[string]string{contentType: constants.MIMEApplicationJSON},
 	}
 
 	var res struct {
@@ -51,7 +53,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	// Create a test server that returns a mocked response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check for the Content-Type header
-		if r.Header.Get("Content-Type") != constants.MIMEApplicationJSON {
+		if r.Header.Get(contentType) != constants.MIMEApplicationJSON {
 			http.Error(w, "Invalid content type", http.StatusBadRequest)
 			return
 		}
@@ -63,7 +65,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 		}
 
 		// Respond with the expected JSON response
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentType, "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]bool{"success": true})
 	}))
@@ -72,7 +74,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	req := transporter.Request{
 		Method:   "POST",
 		Endpoint: server.URL + "/test",
-		Headers:  map[string]string{"Content-Type": constants.MIMEApplicationJSON},
+		Headers:  map[string]string{contentType: constants.MIMEApplicationJSON},
 		Body:     map[string]string{"key": "value"},
 	}
 
@@ -134,7 +136,7 @@ func TestDoHttpRequestWithFormFile(t *testing.T) {
 	req := transporter.Request{
 		Method:   http.MethodPost,
 		Endpoint: server.URL + "/upload",
-		Headers:  map[string]string{"Content-Type": constants.MIMEMultipartForm},
+		Headers:  map[string]string{contentType: constants.MIMEMultipartForm},
 		Files: map[string]transporter.File{
 			"file": {
 				FileName: "fileku.text",

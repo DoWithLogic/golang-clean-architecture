@@ -1,7 +1,6 @@
 package encryptions
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -9,75 +8,50 @@ import (
 	"io"
 )
 
-// Cipher represents a cryptographic cipher using the AES (Advanced Encryption Standard) algorithm in CBC (Cipher Block Chaining) mode.
 type Cipher struct {
-	block cipher.Block // The underlying block cipher.
+	aead cipher.AEAD
 }
 
-// NewES256 creates a new Cipher instance with the specified key for AES encryption.
-// Parameters:
-//   - key: The encryption key.
-//
-// Returns:
-//   - *Cipher: A pointer to the newly created Cipher instance.
-//   - error: An error if the cipher creation fails.
-func NewES256(key []byte) (*Cipher, error) {
+func (c *Cipher) AEAD() cipher.AEAD { return c.aead }
+
+// NewAES256GCM creates a new Cipher instance using AES-GCM (recommended).
+func NewAES256GCM(key []byte) (*Cipher, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Cipher{block: block}, nil
-}
-
-// Decrypt decrypts the given ciphertext using the AES-CBC decryption algorithm.
-// Parameters:
-//   - ciphertext: The ciphertext to decrypt.
-//
-// Returns:
-//   - []byte: The decrypted plaintext.
-//   - error: An error if decryption fails.
-func (c *Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) < aes.BlockSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
-
-	if len(ciphertext)%aes.BlockSize != 0 {
-		return nil, errors.New("ciphertext is not a multiple of the block size")
-	}
-
-	mode := cipher.NewCBCDecrypter(c.block, iv)
-	mode.CryptBlocks(ciphertext, ciphertext)
-
-	// Remove padding
-	padding := int(ciphertext[len(ciphertext)-1])
-	return ciphertext[:len(ciphertext)-padding], nil
-}
-
-// Encrypt encrypts the given plaintext using the AES-CBC encryption algorithm.
-// Parameters:
-//   - plaintext: The plaintext to encrypt.
-//
-// Returns:
-//   - []byte: The encrypted ciphertext.
-//   - error: An error if encryption fails.
-func (c *Cipher) Encrypt(plaintext []byte) ([]byte, error) {
-	padding := aes.BlockSize - len(plaintext)%aes.BlockSize
-	paddedPlaintext := append(plaintext, bytes.Repeat([]byte{byte(padding)}, padding)...)
-
-	iv := make([]byte, aes.BlockSize)
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
 		return nil, err
 	}
 
-	ciphertext := make([]byte, aes.BlockSize+len(paddedPlaintext))
-	copy(ciphertext[:aes.BlockSize], iv)
+	return &Cipher{aead: aead}, nil
+}
 
-	mode := cipher.NewCBCEncrypter(c.block, iv)
-	mode.CryptBlocks(ciphertext[aes.BlockSize:], paddedPlaintext)
+// Encrypt encrypts plaintext using AES-GCM.
+func (c *Cipher) Encrypt(plaintext []byte) ([]byte, error) {
+	nonce := make([]byte, c.aead.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
 
+	ciphertext := c.aead.Seal(nonce, nonce, plaintext, nil)
 	return ciphertext, nil
+}
+
+// Decrypt decrypts ciphertext using AES-GCM.
+func (c *Cipher) Decrypt(ciphertext []byte) ([]byte, error) {
+	nonceSize := c.aead.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := c.aead.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
 }

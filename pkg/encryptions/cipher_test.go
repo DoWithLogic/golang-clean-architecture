@@ -2,7 +2,6 @@ package encryptions_test
 
 import (
 	"bytes"
-	"crypto/aes"
 	"crypto/rand"
 	"testing"
 
@@ -10,82 +9,54 @@ import (
 )
 
 func TestCipherEncryptDecrypt(t *testing.T) {
-	key := make([]byte, aes.BlockSize)
+	// AES-256 key = 32 bytes
+	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)
 	}
 
-	cipher, err := encryptions.NewES256(key)
+	cipher, err := encryptions.NewAES256GCM(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	plaintext := []byte("This is a test message.")
 
-	// Test encryption
+	// Encrypt
 	ciphertext, err := cipher.Encrypt(plaintext)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	// Test decryption
-	decryptedText, err := cipher.Decrypt(ciphertext)
+	// Decrypt
+	decrypted, err := cipher.Decrypt(ciphertext)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Decrypt failed: %v", err)
 	}
 
-	// Ensure the decrypted text matches the original plaintext
-	if !bytes.Equal(decryptedText, plaintext) {
-		t.Errorf("Decrypted text doesn't match original plaintext. Expected %s, got %s", plaintext, decryptedText)
+	if !bytes.Equal(decrypted, plaintext) {
+		t.Errorf("decrypted text mismatch: expected %q, got %q", plaintext, decrypted)
 	}
 }
 
-func TestInvalidCiphertextLength(t *testing.T) {
-	key := make([]byte, aes.BlockSize)
+func TestDecryptInvalidCiphertextLength(t *testing.T) {
+	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)
 	}
 
-	cipher, err := encryptions.NewES256(key)
+	cipher, err := encryptions.NewAES256GCM(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Attempt to decrypt invalid ciphertext length
-	invalidCiphertext := make([]byte, aes.BlockSize-1)
+	// Too short ciphertext (less than nonce size)
+	invalidCiphertext := make([]byte, cipher.AEAD().NonceSize()-1)
 	_, err = cipher.Decrypt(invalidCiphertext)
 
 	if err == nil {
-		t.Error("Expected error for invalid ciphertext length, but got none.")
-	} else {
-		expectedErrorMsg := "ciphertext too short"
-		if err.Error() != expectedErrorMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMsg, err.Error())
-		}
-	}
-}
-
-func TestInvalidBlockSize(t *testing.T) {
-	key := make([]byte, aes.BlockSize)
-	if _, err := rand.Read(key); err != nil {
-		t.Fatal(err)
-	}
-
-	cipher, err := encryptions.NewES256(key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Attempt to decrypt ciphertext with invalid block size
-	invalidCiphertext := make([]byte, aes.BlockSize+1)
-	_, err = cipher.Decrypt(invalidCiphertext)
-
-	if err == nil {
-		t.Error("Expected error for invalid block size, but got none.")
-	} else {
-		expectedErrorMsg := "ciphertext is not a multiple of the block size"
-		if err.Error() != expectedErrorMsg {
-			t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMsg, err.Error())
-		}
+		t.Error("expected error for invalid ciphertext length, got none")
+	} else if err.Error() != "ciphertext too short" {
+		t.Errorf("expected 'ciphertext too short', got %q", err.Error())
 	}
 }

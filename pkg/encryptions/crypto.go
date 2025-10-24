@@ -1,15 +1,17 @@
 package encryptions
 
 import (
+	"crypto/aes"
 	"crypto/cipher"
-	"crypto/des"
 	"crypto/hmac"
 	"crypto/md5"
+	"crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -103,11 +105,34 @@ func (c *Crypto) EncodeBASE64URL(text string) string {
 	return base64.URLEncoding.EncodeToString([]byte(text))
 }
 
-// EncodeDES : Encrypt to DES. input string, output chiper
-func (c *Crypto) EncodeDES(text string) (cipher.Block, error) {
-	desKey, _ := hex.DecodeString(text)
-	cipher, err := des.NewTripleDESCipher(desKey)
-	return cipher, err
+// EncodeAES256GCM encrypts the given plaintext string using AES-256-GCM.
+// keyHex should be a 64-character hex string (32 bytes key).
+func (c *Crypto) EncodeAES256GCM(keyHex, plaintext string) (string, error) {
+	key, err := hex.DecodeString(keyHex)
+	if err != nil {
+		return "", err
+	}
+	if len(key) != 32 {
+		return "", errors.New("AES key must be 32 bytes (256 bits)")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, aesgcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	ciphertext := aesgcm.Seal(nonce, nonce, []byte(plaintext), nil)
+	return hex.EncodeToString(ciphertext), nil
 }
 
 // EncodeSHA256: Encrypt to SHA256. input string, output text
