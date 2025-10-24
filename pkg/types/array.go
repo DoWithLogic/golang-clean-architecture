@@ -1,7 +1,7 @@
-package utils
+package types
 
-// Array extends `[]interface{}`, and it should be used to represent json-like data.
-type Array []interface{}
+// Array extends `any`, and it should be used to represent json-like data.
+type Array []any
 
 func (l *Array) do(do func()) {
 	if len(*l) < 1 {
@@ -13,7 +13,7 @@ func (l *Array) do(do func()) {
 	}
 }
 
-func (l *Array) Add(v ...interface{}) {
+func (l *Array) Add(v ...any) {
 	l.do(func() {
 		for _, v := range v {
 			*l = append(*l, v)
@@ -31,7 +31,7 @@ func (l *Array) Delete(k int) {
 	})
 }
 
-func (l *Array) Map(fn func(k int, v interface{})) {
+func (l *Array) Map(fn func(k int, v any)) {
 	l.do(func() {
 		if fn != nil {
 			for k, v := range *l {
