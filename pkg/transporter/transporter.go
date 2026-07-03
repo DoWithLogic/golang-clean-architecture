@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/constants"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/valyala/fasthttp"
@@ -153,7 +153,7 @@ func (c *AppHttp) prepareRequestBody(request *fasthttp.Request, req Request) err
 		}
 
 		request.SetBody(jsonBody)
-		request.Header.Set("Content-Type", constants.MIMEApplicationJSON)
+		request.Header.Set("Content-Type", echo.MIMEApplicationJSON)
 	}
 
 	return nil
