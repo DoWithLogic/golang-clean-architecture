@@ -25,13 +25,13 @@ type echoRequest struct {
 
 type EchoOptionFn func(*echoRequest)
 
-func EchoWithTracing(serviceName string) EchoOptionFn {
+func WithTracing(serviceName string) EchoOptionFn {
 	return func(e *echoRequest) {
 		e.IsObservabilityEnable = true
 		e.ServiceName = &serviceName
 	}
 }
-func EchoWithCORS(c CORSConfig) EchoOptionFn { return func(er *echoRequest) { er.CORSConfig = &c } }
+func WithCORS(c CORSConfig) EchoOptionFn { return func(er *echoRequest) { er.CORSConfig = &c } }
 
 var defaultCORSConfig = CORSConfig{
 	AllowOrigins: []string{"*"},

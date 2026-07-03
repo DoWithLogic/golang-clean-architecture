@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
 	"github.com/labstack/echo/v4"
 )
 
