@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_echo"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasources"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
@@ -27,9 +27,14 @@ type Server struct {
 }
 
 func NewServer(ctx context.Context, cfg config.Config) *Server {
+	serverOpts := []app_echo.EchoOptionFn{}
+	if cfg.Observability.Enable {
+		serverOpts = append(serverOpts, app_echo.EchoWithTracing(cfg.App.Name))
+	}
+
 	return &Server{
 		db:   lo.Must(datasources.NewMySQLDB(cfg.Database)),
-		echo: middleware.NewEchoServer(cfg),
+		echo: cfg.Server.New(serverOpts...),
 		cfg:  cfg,
 	}
 }

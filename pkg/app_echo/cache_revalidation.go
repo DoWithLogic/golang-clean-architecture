@@ -1,4 +1,4 @@
-package middleware
+package app_echo
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func CacheWithRevalidation(next echo.HandlerFunc) echo.HandlerFunc {
+func cacheWithRevalidation(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Call the next handler
 		err := next(c)

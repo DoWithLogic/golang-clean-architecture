@@ -6,13 +6,14 @@ import (
 	"log"
 	"strings"
 
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_echo"
 	"github.com/spf13/viper"
 )
 
 type (
 	Config struct {
 		App            AppConfig
-		Server         ServerConfig
+		Server         app_echo.EchoConfig
 		Database       DatabaseConfig
 		Authentication AuthenticationConfig
 		Observability  ObservabilityConfig
