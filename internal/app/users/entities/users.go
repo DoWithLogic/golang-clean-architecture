@@ -24,7 +24,7 @@ type User struct {
 }
 
 func (u User) IsPasswordValid(password string) bool { return u.Password == password }
-func (User) TableName() string                      { return types.TABLE_NAME_USERS.String() }
+func (User) TableName() string                      { return "users" }
 
 func (u User) ToJWTData(expiresAt int64) security.PayloadToken {
 	return security.PayloadToken{
