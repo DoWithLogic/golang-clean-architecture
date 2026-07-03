@@ -9,7 +9,6 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users/entities"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability/instrumentation"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/types"
 	"gorm.io/gorm"
 )
 
@@ -45,7 +44,7 @@ func (r *repository) IsUserExists(ctx context.Context, contactValue string) bool
 	defer span.End()
 
 	var count int64
-	if err := r.db.WithContext(ctx).Table(types.TABLE_NAME_USERS.String()).Where("contact_value = ?", contactValue).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&entities.User{}).Where("contact_value = ?", contactValue).Count(&count).Error; err != nil {
 		return false
 	}
 
@@ -61,7 +60,7 @@ func (r *repository) UserDetail(ctx context.Context, opts ...entities.UserDetail
 		opt.Apply(request)
 	}
 
-	baseQuery := r.db.WithContext(ctx).Table(types.TABLE_NAME_USERS.String())
+	baseQuery := r.db.WithContext(ctx).Model(&entities.User{})
 	if request.ID != nil {
 		baseQuery = baseQuery.Where("id = ?", request.ID)
 	}
