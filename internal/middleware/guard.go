@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/types"
@@ -10,7 +9,7 @@ import (
 )
 
 var (
-	errMissingJwtToken = errors.New("Missing JWT token")
+	errInvalidToken = errors.New("invalid authentication token")
 )
 
 type Middleware struct {
@@ -27,7 +26,7 @@ func (m *Middleware) JWTMiddleware() echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			token := c.Request().Header.Get(types.AuthorizationHeaderKey.String())
 			if token == "" {
-				return response.ErrorBuilder(errs.Unauthorized(errMissingJwtToken)).Send(c)
+				return response.ErrorBuilder(response.Unauthorized(errInvalidToken)).Send(c)
 			}
 
 			if err := m.jwt.ValidateToken(c, token); err != nil {

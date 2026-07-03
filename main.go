@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/internal/server"
@@ -27,14 +26,6 @@ func main() {
 	if err != nil {
 		// If an error occurs while loading the configuration, panic with the error.
 		panic(err)
-	}
-
-	// Set the time zone to the specified value from the configuration.
-	_, err = time.LoadLocation(cfg.Server.TimeZone)
-	if err != nil {
-		// If an error occurs while setting the time zone, log the error and exit the function.
-		log.Error("Error on setting the time zone: ", err)
-		return
 	}
 
 	// Initialize observability components if observability is enabled in the configuration.

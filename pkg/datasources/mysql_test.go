@@ -79,7 +79,6 @@ func TestDSNFormatting(t *testing.T) {
 		Host:     "127.0.0.1",
 		Port:     "3307",
 		DBName:   "demo",
-		Debug:    false,
 	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Asia%%2FJakarta",
