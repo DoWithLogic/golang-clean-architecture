@@ -25,7 +25,7 @@ func (uc *usecase) Login(ctx context.Context, request dtos.UserLoginRequest) (re
 	}
 
 	expiredAt := time.Now().Add(time.Minute * 60).Unix()
-	jwtToken, err := uc.appJwt.GenerateToken(ctx, userData.ToJWTData(expiredAt))
+	jwtToken, err := uc.appJwt.CreateJWT(userData.ToJWTData(expiredAt))
 	if err != nil {
 		return result, response.InternalServerError(err)
 	}

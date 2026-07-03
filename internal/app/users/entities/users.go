@@ -3,9 +3,9 @@ package entities
 import (
 	"time"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
+	jwtPkg "github.com/DoWithLogic/golang-clean-architecture/pkg/jwt"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/types"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -26,15 +26,17 @@ type User struct {
 func (u User) IsPasswordValid(password string) bool { return u.Password == password }
 func (User) TableName() string                      { return "users" }
 
-func (u User) ToJWTData(expiresAt int64) security.PayloadToken {
-	return security.PayloadToken{
-		Data: &security.Data{
+func (u User) ToJWTData(expiresAt int64) *jwtPkg.JWTClaims {
+	expiredTime := time.Now().Add(time.Minute * time.Duration(expiresAt))
+
+	return &jwtPkg.JWTClaims{
+		Data: &jwtPkg.Data{
 			ID:           u.ID,
 			ContactType:  u.ContactType,
 			ContactValue: u.ContactValue,
 		},
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiresAt,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiredTime),
 		},
 	}
 }

@@ -3,13 +3,13 @@ package usecase
 import (
 	"github.com/DoWithLogic/golang-clean-architecture/internal/app/users"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/encryptions"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/jwt"
 	"github.com/invopop/validation"
 )
 
 type usecase struct {
 	repo   users.Repository
-	appJwt *security.JWT
+	appJwt *jwt.JWTFactory
 	crypto *encryptions.Crypto
 }
 
@@ -26,7 +26,7 @@ type Repositories struct {
 }
 
 type Pkgs struct {
-	AppJwt *security.JWT
+	AppJwt *jwt.JWTFactory
 	Crypto *encryptions.Crypto
 }
 

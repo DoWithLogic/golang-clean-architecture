@@ -14,28 +14,33 @@ import (
 	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_echo"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasources"
+	appRedis "github.com/DoWithLogic/golang-clean-architecture/pkg/redis"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 
 	"github.com/samber/lo"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type Server struct {
-	db   *gorm.DB      // Database connection.
-	echo *echo.Echo    // Echo HTTP server instance.
-	cfg  config.Config // Configuration settings for the application.
+	db          *gorm.DB      // Database connection.
+	echo        *echo.Echo    // Echo HTTP server instance.
+	cfg         config.Config // Configuration settings for the application.
+	redisClient *redis.Client
 }
 
 func NewServer(ctx context.Context, cfg config.Config) *Server {
 	serverOpts := []app_echo.EchoOptionFn{}
 	if cfg.Observability.Enable {
-		serverOpts = append(serverOpts, app_echo.EchoWithTracing(cfg.App.Name))
+		serverOpts = append(serverOpts, app_echo.WithTracing(cfg.App.Name))
 	}
 
 	return &Server{
-		db:   lo.Must(datasources.NewMySQLDB(cfg.Database)),
-		echo: cfg.Server.New(serverOpts...),
-		cfg:  cfg,
+		db:          lo.Must(datasources.NewMySQLDB(ctx, cfg.Database)),
+		echo:        cfg.Server.New(serverOpts...),
+		cfg:         cfg,
+		redisClient: appRedis.NewRedisClient(ctx, cfg.Redis),
 	}
 }
 

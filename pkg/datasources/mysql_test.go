@@ -1,88 +1,99 @@
 package datasources_test
 
 import (
-	"fmt"
+	"context"
+	"os"
+	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/DoWithLogic/golang-clean-architecture/config"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasources"
-	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
 )
 
-func TestNewMySQLDBSuccess(t *testing.T) {
-	cfg := config.DatabaseConfig{
+func startMySQL(t *testing.T) (*mysql.MySQLContainer, string) {
+	ctx := context.Background()
+
+	img := os.Getenv("MYSQL_CONTAINER_IMAGE")
+	if img == "" {
+		img = "mysql:8.0.36"
+	}
+
+	container, err := mysql.Run(
+		ctx,
+		img,
+		mysql.WithDatabase("golang_clean_architecture"),
+		mysql.WithUsername("root"),
+		mysql.WithPassword("password"),
+	)
+
+	require.NoError(t, err)
+
+	dsn, err := container.ConnectionString(
+		ctx,
+		"charset=utf8",
+		"multiStatements=true",
+		"loc=UTC",
+		"parseTime=true",
+	)
+	require.NoError(t, err)
+
+	return container, dsn
+}
+
+func TestNewMySQLDB_ConnectAndPing(t *testing.T) {
+	t.Parallel()
+
+	container, dsn := startMySQL(t)
+	defer func() {
+		_ = container.Terminate(context.Background())
+	}()
+
+	host, port, dbName := parseMySQLDSN(t, dsn)
+
+	cfg := datasources.DatabaseConfig{
+		Host:     host,
+		Port:     port,
+		DBName:   dbName,
 		UserName: "root",
-		Password: "pass",
-		Host:     "localhost",
-		Port:     "3306",
-		DBName:   "testdb",
+		Password: "password",
 		Debug:    true,
 	}
 
-	// override mysql.Open to intercept DSN
-	defer func() { recover() }() // catch panic if any
+	db, err := datasources.NewMySQLDB(
+		context.Background(),
+		cfg,
+		datasources.WithMaxOpenConns(10),
+		datasources.WithMaxIdleConns(5),
+		datasources.WithMetrics(false),
+		datasources.WithTracing(false),
+	)
 
-	// To test DSN formatting and config usage
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Asia%%2FJakarta",
-		cfg.UserName, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
+	require.NoError(t, err)
+	require.NotNil(t, db)
 
-	assert.Contains(t, dsn, "localhost:3306")
-	assert.Contains(t, dsn, "parseTime=true")
+	sqlDB, err := db.DB()
+	require.NoError(t, err)
 
-	// We’ll just assert the function panics if MySQL is unreachable (expected)
-	assert.Panics(t, func() {
-		datasources.NewMySQLDB(cfg)
-	}, "expected panic because no MySQL is available")
+	require.NoError(t, sqlDB.Ping())
+
+	stats := sqlDB.Stats()
+	require.Equal(t, 2, stats.MaxOpenConnections)
 }
 
-func TestNewMySQLDBWithSilentLogger(t *testing.T) {
-	cfg := config.DatabaseConfig{
-		UserName: "root",
-		Password: "pass",
-		Host:     "localhost",
-		Port:     "3306",
-		DBName:   "testdb",
-		Debug:    false,
-	}
+func parseMySQLDSN(t *testing.T, dsn string) (host, port, db string) {
+	require.Contains(t, dsn, "@tcp(")
 
-	assert.Panics(t, func() {
-		datasources.NewMySQLDB(cfg)
-	})
-}
+	parts := strings.Split(dsn, "@tcp(")
+	require.Len(t, parts, 2)
 
-func TestNewMySQLDBMockConnection(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+	hostPortDB := strings.Split(parts[1], ")")
+	require.Len(t, hostPortDB, 2)
 
-	dial := mysql.New(mysql.Config{
-		Conn:                      db,
-		SkipInitializeWithVersion: true,
-	})
+	hostPort := strings.Split(hostPortDB[0], ":")
 
-	// Simulate gorm.Open works fine
-	gdb, err := gorm.Open(dial, &gorm.Config{})
-	assert.NoError(t, err)
-	assert.NotNil(t, gdb)
+	dbPart := strings.Split(hostPortDB[1], "/")
+	dbName := strings.Split(dbPart[1], "?")[0]
 
-	mock.ExpectClose()
-	assert.NoError(t, db.Close())
-}
-
-func TestDSNFormatting(t *testing.T) {
-	cfg := config.DatabaseConfig{
-		UserName: "user",
-		Password: "1234",
-		Host:     "127.0.0.1",
-		Port:     "3307",
-		DBName:   "demo",
-	}
-
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true&loc=Asia%%2FJakarta",
-		cfg.UserName, cfg.Password, cfg.Host, cfg.Port, cfg.DBName)
-
-	assert.Equal(t, "user:1234@tcp(127.0.0.1:3307)/demo?charset=utf8&parseTime=true&loc=Asia%2FJakarta", dsn)
+	return hostPort[0], hostPort[1], dbName
 }

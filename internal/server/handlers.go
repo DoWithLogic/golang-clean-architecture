@@ -9,74 +9,97 @@ import (
 	userV1 "github.com/DoWithLogic/golang-clean-architecture/internal/app/users/delivery/http/v1"
 	userRepository "github.com/DoWithLogic/golang-clean-architecture/internal/app/users/repository"
 	userUseCase "github.com/DoWithLogic/golang-clean-architecture/internal/app/users/usecase"
-	"github.com/DoWithLogic/golang-clean-architecture/internal/middleware"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/encryptions"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/security"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/jwt"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/logging"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/middleware"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/observability"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/redis"
 	"github.com/labstack/echo/v4"
 
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
+type routeMapper interface {
+	MapRoutes(api *echo.Group, mw *middleware.Middleware)
+}
+
 func (s *Server) setup() error {
-	domain := s.echo.Group("/api/v1")
-	domain.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, "Hello Word 👋") })
+	s.setupMiddleware()
 
-	// Serve Swagger documentation
-	domain.GET("/swagger/*", echoSwagger.WrapHandler)
+	api := s.echo.Group("/api/v1")
 
-	customSwaggerHandler := func(c echo.Context) error {
-		// Read the generated Swagger JSON file
-		data, err := os.ReadFile("docs/swagger.json") // Adjust the path as necessary
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "Error reading Swagger JSON")
-		}
+	s.registerUtilityRoutes(api)
 
-		// Unmarshal the Swagger JSON into a map
-		var swaggerDoc map[string]interface{}
-		if err := json.Unmarshal(data, &swaggerDoc); err != nil {
-			return c.String(http.StatusInternalServerError, "Error parsing Swagger JSON")
-		}
+	middleware, handlers := s.buildHandlers()
 
-		// Modify SwaggerInfo
-		swaggerDoc["host"] = s.cfg.App.Host
-		swaggerDoc["schemes"] = strings.Split(s.cfg.App.Scheme, ",")
-
-		// Marshal the modified Swagger JSON back to a string
-		modifiedSwaggerJSON, err := json.Marshal(swaggerDoc)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, "Error generating modified Swagger JSON")
-		}
-
-		return c.String(http.StatusOK, string(modifiedSwaggerJSON))
-	}
-	domain.GET("/swagger/doc.json", customSwaggerHandler)
-
-	var (
-		crypto     = encryptions.NewCrypto(s.cfg.Authentication.Key)
-		jwt        = security.NewJWT(s.cfg.JWT)
-		middleware = middleware.NewMiddleware(jwt)
-
-		userRepo = userRepository.NewRepository(s.db)
-		userUC   = userUseCase.NewUseCase(userUseCase.Dependencies{
-			UseCases:     userUseCase.UseCases{},
-			Repositories: userUseCase.Repositories{Repo: userRepo},
-			Pkgs:         userUseCase.Pkgs{AppJwt: jwt, Crypto: crypto},
-		})
-		userHandler = userV1.NewHandlers(userUC)
-	)
-
-	handlers := []routeMapper{
-		userHandler,
-	}
-
-	// Routes
-	for idx := range handlers {
-		handlers[idx].MapRoutes(domain, middleware)
+	for _, handler := range handlers {
+		handler.MapRoutes(api, middleware)
 	}
 
 	return nil
 }
 
-type routeMapper interface {
-	MapRoutes(echo *echo.Group, mw *middleware.Middleware)
+func (s *Server) setupMiddleware() {
+	logger := observability.NewZeroLogHook().Z()
+	s.echo.Use(logging.Middleware(logging.WithLogger(logger), logging.WithMaskedKeys("password", "token")))
+}
+
+func (s *Server) registerUtilityRoutes(api *echo.Group) {
+	api.GET("/ping", s.ping)
+	api.GET("/swagger/*", echoSwagger.WrapHandler)
+	api.GET("/swagger/doc.json", s.swaggerDoc)
+}
+
+func (s *Server) ping(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello World 👋")
+}
+
+func (s *Server) swaggerDoc(c echo.Context) error {
+	data, err := os.ReadFile("docs/swagger.json")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to read swagger document")
+	}
+
+	var doc map[string]any
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to parse swagger document")
+	}
+
+	doc["host"] = s.cfg.App.Host
+	doc["schemes"] = strings.Split(s.cfg.App.Scheme, ",")
+
+	body, err := json.Marshal(doc)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate swagger document")
+	}
+
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, body)
+}
+
+func (s *Server) buildHandlers() (*middleware.Middleware, []routeMapper) {
+	redisManager := redis.NewRedisManager(nil)
+
+	jwtFactory := jwt.NewJWTFactory(s.cfg.JWT, redisManager)
+	crypto := encryptions.NewCrypto(s.cfg.Authentication.Key)
+
+	mw := middleware.New(jwtFactory)
+
+	userRepo := userRepository.NewRepository(s.db)
+
+	userUC := userUseCase.NewUseCase(userUseCase.Dependencies{
+		Repositories: userUseCase.Repositories{
+			Repo: userRepo,
+		},
+		Pkgs: userUseCase.Pkgs{
+			AppJwt: jwtFactory,
+			Crypto: crypto,
+		},
+	})
+
+	handlers := []routeMapper{
+		userV1.NewHandlers(userUC),
+	}
+
+	return mw, handlers
 }

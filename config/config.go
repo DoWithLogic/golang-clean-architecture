@@ -7,6 +7,9 @@ import (
 	"strings"
 
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/app_echo"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/datasources"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/jwt"
+	"github.com/DoWithLogic/golang-clean-architecture/pkg/redis"
 	"github.com/spf13/viper"
 )
 
@@ -14,11 +17,11 @@ type (
 	Config struct {
 		App            AppConfig
 		Server         app_echo.EchoConfig
-		Database       DatabaseConfig
+		Database       datasources.DatabaseConfig
 		Authentication AuthenticationConfig
 		Observability  ObservabilityConfig
-		JWT            JWTConfig
-		Redis          RedisConfig
+		JWT            jwt.JWTConfig
+		Redis          redis.RedisConfig
 	}
 
 	// AppConfig holds the configuration related to the application settings.
@@ -61,12 +64,6 @@ type (
 	ObservabilityConfig struct {
 		Enable bool   // Indicates if observability is enabled.
 		Mode   string // Specifies the observability mode.
-	}
-
-	JWTConfig struct {
-		Key     string
-		Expired int
-		Label   string
 	}
 )
 
