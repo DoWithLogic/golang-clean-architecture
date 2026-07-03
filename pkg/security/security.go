@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/DoWithLogic/golang-clean-architecture/config"
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/constants"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/errs"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/response"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/types"
@@ -61,13 +60,13 @@ func (j *JWT) ValidateToken(c echo.Context, token string) error {
 	}
 
 	// Store the token claims in the request context for later use
-	c.Set(constants.AuthCredentialKey, newToken.Claims.(*PayloadToken))
+	c.Set(types.CredentialDataContextKey.String(), newToken.Claims.(*PayloadToken))
 
 	return nil
 }
 
 func NewTokenInformation(ctx echo.Context) (*PayloadToken, error) {
-	tokenInformation, ok := ctx.Get(constants.AuthCredentialKey).(*PayloadToken)
+	tokenInformation, ok := ctx.Get(types.CredentialDataContextKey.String()).(*PayloadToken)
 	if !ok {
 		return tokenInformation, errs.Unauthorized(errs.ErrFailedGetTokenInformation)
 	}

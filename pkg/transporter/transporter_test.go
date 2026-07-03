@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DoWithLogic/golang-clean-architecture/pkg/constants"
 	"github.com/DoWithLogic/golang-clean-architecture/pkg/transporter"
+	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +31,7 @@ func TestDoHttpRequestError(t *testing.T) {
 	req := transporter.Request{
 		Method:   "GET",
 		Endpoint: server.URL + "/nonexistent", // Use the test server URL
-		Headers:  map[string]string{contentType: constants.MIMEApplicationJSON},
+		Headers:  map[string]string{contentType: echo.MIMEApplicationJSON},
 	}
 
 	var res struct {
@@ -53,7 +53,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	// Create a test server that returns a mocked response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check for the Content-Type header
-		if r.Header.Get(contentType) != constants.MIMEApplicationJSON {
+		if r.Header.Get(contentType) != echo.MIMEApplicationJSON {
 			http.Error(w, "Invalid content type", http.StatusBadRequest)
 			return
 		}
@@ -74,7 +74,7 @@ func TestDoHttpRequestWithJSONBody(t *testing.T) {
 	req := transporter.Request{
 		Method:   "POST",
 		Endpoint: server.URL + "/test",
-		Headers:  map[string]string{contentType: constants.MIMEApplicationJSON},
+		Headers:  map[string]string{contentType: echo.MIMEApplicationJSON},
 		Body:     map[string]string{"key": "value"},
 	}
 
@@ -136,7 +136,7 @@ func TestDoHttpRequestWithFormFile(t *testing.T) {
 	req := transporter.Request{
 		Method:   http.MethodPost,
 		Endpoint: server.URL + "/upload",
-		Headers:  map[string]string{contentType: constants.MIMEMultipartForm},
+		Headers:  map[string]string{contentType: echo.MIMEMultipartForm},
 		Files: map[string]transporter.File{
 			"file": {
 				FileName: "fileku.text",
